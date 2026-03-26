@@ -1,1 +1,297 @@
 # MockData
+
+### WEB界面
+按照步骤设计，从上到下，每执行完一步后跳到下一步，ts文件在每一个步骤都可以下载，界面中由loading，本地服务启动后提醒用户
+
+### 核心功能模块
+1. **API JSON 解析器** - 解析OpenAPI JSON文件
+2. **TS 类型生成器** - 将解析的JSON文件转换为TypeScript类型定义文件，并且支持TS文件直接下载
+3. **智能 Mock 数据生成器** - 基于字段定义生成真实感数据，预设规则防止返回无用数据
+4. **启动本地服务器** -根据OpenAPI JSON的API接口和生成的mock数据，启动本地接口服务器，数据修改后可以进行热更新，可以直接进行数据联调。
+5. **聊天对话界面** - 返回数据不合适进行调整,支持用户定制数据返回需求
+
+
+# 二、WEB界面流程（完整闭环）
+
+## Step 1：导入 OpenAPI
+
+**输入方式：**
+
+* 上传OpenAI 3.0版本的 JSON 文件
+* JSON 校验（防止格式错误）
+* API数量统计展示
+
+**输出：**
+
+* 解析结果预览（接口列表）
+
+👉 按钮：
+
+* `解析并进入下一步`
+
+---
+
+## Step 2：API 结构确认（很关键，你漏了）
+
+**功能：**
+
+* 展示接口列表
+* 可选择：
+  * 是否启用该接口，只有已选择的接口才需要进行下面步骤,生成ts类型和mock数据接口返回
+
+👉 按钮：
+
+* `确认结构 → 生成 TS`
+
+---
+
+## Step 3：TS 类型生成
+
+**功能：**
+
+* 生成：
+
+  * `types.ts`
+  * `api.ts（可选）`
+
+* 支持命名空间拆分（避免大文件）
+* 类型去重（schema复用）
+
+👉 UI：
+
+* 代码预览（Monaco Editor）
+* 下载按钮
+
+👉 输出：
+
+* TS 文件下载
+
+---
+
+## Step 4：Mock 数据策略配置（你原来太简单）
+
+### 配置项：
+
+| 项目     | 说明         |
+| ------ | ---------- |
+| 数据条数   | 默认 1 / 可调  |
+| 是否随机   | 固定 or 随机   |
+| AI模式   | 开 / 关      |
+| 异常数据比例 | 0% ~ 30%   |
+| 字段覆盖策略 | 全字段 / 关键字段 |
+
+---
+
+### 🔥 关键增强（你没考虑但很重要）
+
+#### 字段规则编辑器（核心竞争力）
+
+用户可以改规则：
+
+```json
+{
+  "email": "faker.internet.email",
+  "phone": "faker.phone.number",
+  "price": "random(10,1000)"
+}
+```
+
+
+👉 按钮：
+
+* `生成 Mock 数据`
+
+---
+
+## Step 5：Mock 数据预览 & 调整
+
+### 功能：
+
+* JSON 可编辑
+* 一键重新生成
+* 局部字段 regenerate
+
+### 「对话调优入口」
+
+
+用户输入：
+
+> “这个用户昵称太假了，改成更真实一点”
+
+系统行为：
+
+* 调用 LLM
+* 修改 JSON
+* 高亮变更字段
+
+---
+
+👉 按钮：
+
+* `确认数据 → 启动服务`
+
+---
+
+## Step 6：本地 Mock Server（核心闭环）
+
+### UI控制台：
+
+* 启动 / 停止
+* 端口配置（默认 3000）
+* API列表
+
+### 每个接口支持：
+
+* 状态码切换（200 / 403 / 500）
+* 延迟模拟（0ms / 500ms / 2s）
+* 数据实时修改（热更新）
+
+👉 新增关键点（你漏了）：
+
+* **请求日志面板**
+* **curl / fetch 示例**
+
+---
+
+# 三、技术栈
+next.js 实现前后端功能
+
+---
+
+# 四、技术选型（具体到库）
+
+## 1️⃣ OpenAPI解析
+
+* `swagger-parser`
+* `openapi-types`
+
+---
+
+## 2️⃣ TS 类型生成
+
+推荐直接用：
+
+* `openapi-typescript`
+* `swagger-typescript-ap`
+
+---
+
+## 3️⃣ Mock 数据生成
+
+### 基础规则引擎
+
+* `@faker-js/faker`
+
+### JSON生成
+
+* `json-schema-faker`
+
+👉 组合：
+
+```
+OpenAPI schema → JSON Schema → faker
+```
+
+---
+
+### AI增强
+
+* 调用 LLM（OpenAI / 本地模型）
+
+---
+
+
+# 五、Codex 可执行方案（重点）
+
+下面是你可以直接让 Codex 干的任务拆解👇
+
+---
+
+## 🧩 Task 1：OpenAPI 解析模块
+
+```ts
+// parseOpenAPI.ts
+import SwaggerParser from "@apidevtools/swagger-parser";
+
+export async function parse(file: string) {
+  const api = await SwaggerParser.parse(file);
+  return api.paths;
+}
+```
+
+---
+
+## 🧩 Task 2：TS 生成
+
+```ts
+import openapiTS from "openapi-typescript";
+
+export async function generateTypes(schema) {
+  const ts = await openapiTS(schema);
+  return ts;
+}
+```
+
+---
+
+## 🧩 Task 3：Mock 数据生成器
+
+```ts
+import { faker } from "@faker-js/faker";
+
+export function mockValue(type: string) {
+  switch (type) {
+    case "string":
+      return faker.lorem.word();
+    case "number":
+      return faker.number.int();
+    case "email":
+      return faker.internet.email();
+    default:
+      return null;
+  }
+}
+```
+
+---
+
+## 🧩 Task 4：Mock Server
+
+```ts
+import express from "express";
+
+const app = express();
+
+app.get("/api/user", (req, res) => {
+  res.json({ name: "test" });
+});
+
+app.listen(3000);
+```
+
+---
+
+## 🧩 Task 5：热更新（关键）
+
+方案：
+
+* 使用 `chokidar` 监听 mock 文件
+
+```ts
+import chokidar from "chokidar";
+
+chokidar.watch("./mock").on("change", () => {
+  console.log("mock updated");
+});
+```
+
+---
+
+## 🧩 Task 6：AI 调整接口
+
+```ts
+async function adjustMock(prompt, data) {
+  const res = await llm(prompt + JSON.stringify(data));
+  return res;
+}
+```

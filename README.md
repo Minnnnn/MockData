@@ -200,3 +200,6 @@ OpenAPI schema → JSON Schema → faker
 
 ### 优化
 - [ ] 首页可输入自己想要的json
+- [ ] 可以做字段映射 pageSize->limit
+- [ ] 增加图片列表，每次随机取
+- [ ] 对入参做简单校验

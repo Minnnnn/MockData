@@ -1,0 +1,373 @@
+{
+  "running": true,
+  "port": 3666,
+  "routes": [
+    {
+      "endpointId": "uploadOneFile",
+      "method": "POST",
+      "path": "/third/cx/file/uploadOneFile",
+      "description": "上传单个文件",
+      "payload": {
+        "msg": "xiphias usque",
+        "rc": 892,
+        "data": "impedit aegrotatio"
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "pageList",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "description": "商品审核分页查询",
+      "payload": [
+        {
+          "msg": "desparatus votum",
+          "rc": 320,
+          "data": {
+            "items": [
+              {
+                "id": "adinventitias spargo",
+                "auditState": 210,
+                "shopName": "audeo truculenter",
+                "shopCode": "tenuis vix",
+                "productCode": "vehemens quia",
+                "imgSrc": "qui sumptus",
+                "productName": "caterva via",
+                "productType": "benigne defluo",
+                "retailPrice": 218.24,
+                "costPrice": 242.54,
+                "purchaseTax": 614.22,
+                "auditTime": "2026-03-26 22:53:10"
+              },
+              {
+                "id": "voro curia",
+                "auditState": 817,
+                "shopName": "vulgivagus ventus",
+                "shopCode": "corroboro architecto",
+                "productCode": "blanditiis talis",
+                "imgSrc": "tunc hic",
+                "productName": "blandior ullus",
+                "productType": "audio vere",
+                "retailPrice": 178.02,
+                "costPrice": 833.36,
+                "purchaseTax": 920.86,
+                "auditTime": "2026-03-26 23:51:11"
+              },
+              {
+                "id": "aiunt certe",
+                "auditState": 483,
+                "shopName": "verumtamen vulgivagus",
+                "shopCode": "tempus vado",
+                "productCode": "at cibo",
+                "imgSrc": "depereo cubitum",
+                "productName": "approbo turpis",
+                "productType": "placeat deinde",
+                "retailPrice": 988.48,
+                "costPrice": 147.05,
+                "purchaseTax": 236.28,
+                "auditTime": "2026-03-27 01:11:28"
+              }
+            ],
+            "total": 817,
+            "hasMore": false
+          },
+          "trace": "absens laboriosam",
+          "success": false
+        },
+        {
+          "msg": "arx argentum",
+          "rc": 44,
+          "data": {
+            "items": [
+              {
+                "id": "victoria reiciendis",
+                "auditState": 559,
+                "shopName": "apto spiculum",
+                "shopCode": "absum exercitationem",
+                "productCode": "sto exercitationem",
+                "imgSrc": "trucido ciminatio",
+                "productName": "solio usus",
+                "productType": "viduo curtus",
+                "retailPrice": 52.59,
+                "costPrice": 189.74,
+                "purchaseTax": 673.9,
+                "auditTime": "2026-03-27 11:38:27"
+              },
+              {
+                "id": "reiciendis ars",
+                "auditState": 359,
+                "shopName": "cui celer",
+                "shopCode": "verbera absconditus",
+                "productCode": "advoco congregatio",
+                "imgSrc": "catena uter",
+                "productName": "defungo volutabrum",
+                "productType": "temeritas somniculosus",
+                "retailPrice": 306.41,
+                "costPrice": 752.94,
+                "purchaseTax": 296.94,
+                "auditTime": "2026-03-27 10:36:00"
+              },
+              {
+                "id": "ventito est",
+                "auditState": 984,
+                "shopName": "audeo cohors",
+                "shopCode": "canto at",
+                "productCode": "ducimus combibo",
+                "imgSrc": "stabilis substantia",
+                "productName": "repellendus verumtamen",
+                "productType": "cupiditate correptius",
+                "retailPrice": 61.37,
+                "costPrice": 521.25,
+                "purchaseTax": 863.37,
+                "auditTime": "2026-03-27 16:44:04"
+              }
+            ],
+            "total": 478,
+            "hasMore": false
+          },
+          "trace": "amiculum trado",
+          "success": true
+        },
+        {
+          "msg": "damnatio surgo",
+          "rc": 242,
+          "data": {
+            "items": [
+              {
+                "id": "rem laborum",
+                "auditState": 407,
+                "shopName": "consectetur caste",
+                "shopCode": "comptus decretum",
+                "productCode": "victus vita",
+                "imgSrc": "calco centum",
+                "productName": "delego cubicularis",
+                "productType": "thesis via",
+                "retailPrice": 780.78,
+                "costPrice": 416.82,
+                "purchaseTax": 493.14,
+                "auditTime": "2026-03-27 17:22:05"
+              },
+              {
+                "id": "vitiosus tersus",
+                "auditState": 946,
+                "shopName": "vivo carbo",
+                "shopCode": "deprecator accommodo",
+                "productCode": "concido deputo",
+                "imgSrc": "crux recusandae",
+                "productName": "usitas talis",
+                "productType": "decumbo provident",
+                "retailPrice": 169.58,
+                "costPrice": 54.72,
+                "purchaseTax": 385.33,
+                "auditTime": "2026-03-27 04:55:24"
+              },
+              {
+                "id": "stultus adversus",
+                "auditState": 895,
+                "shopName": "vaco expedita",
+                "shopCode": "crapula stips",
+                "productCode": "deporto acerbitas",
+                "imgSrc": "testimonium abutor",
+                "productName": "verbum tubineus",
+                "productType": "cunctatio auditor",
+                "retailPrice": 556.09,
+                "costPrice": 152.16,
+                "purchaseTax": 626.49,
+                "auditTime": "2026-03-27 01:58:16"
+              }
+            ],
+            "total": 409,
+            "hasMore": false
+          },
+          "trace": "substantia tam",
+          "success": false
+        }
+      ],
+      "totalCount": 3,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "edit",
+      "method": "POST",
+      "path": "/scm/productAudit/edit",
+      "description": "商品审核单商品操作",
+      "payload": {
+        "msg": "benigne amiculum",
+        "rc": 519,
+        "data": {
+          "value": "vado"
+        },
+        "trace": "caelestis cohibeo",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    }
+  ],
+  "logs": [
+    {
+      "id": "1774603536951_191ytq",
+      "time": "2026-03-27T09:25:36.951Z",
+      "method": "POST",
+      "path": "/scm/productAudit/edit",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1774603512318_6jo0bi",
+      "time": "2026-03-27T09:25:12.318Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1774602053283_7nmkgn",
+      "time": "2026-03-27T09:00:53.283Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 500,
+      "delayMs": 0
+    },
+    {
+      "id": "1774602053206_gpl3nq",
+      "time": "2026-03-27T09:00:53.206Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1774602053160_lwgu3y",
+      "time": "2026-03-27T09:00:53.160Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1774602035004_en7a6z",
+      "time": "2026-03-27T09:00:35.004Z",
+      "method": "POST",
+      "path": "/scm/productAudit/edit",
+      "status": 403,
+      "delayMs": 0
+    },
+    {
+      "id": "1774602034931_4hnr4h",
+      "time": "2026-03-27T09:00:34.931Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 500,
+      "delayMs": 0
+    },
+    {
+      "id": "1774602034848_mn5ek0",
+      "time": "2026-03-27T09:00:34.848Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1774602034795_n7xf5g",
+      "time": "2026-03-27T09:00:34.795Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1774601958931_5kp5g2",
+      "time": "2026-03-27T08:59:18.931Z",
+      "method": "POST",
+      "path": "/scm/productAudit/edit",
+      "status": 403,
+      "delayMs": 0
+    },
+    {
+      "id": "1774601958740_rh9g1d",
+      "time": "2026-03-27T08:59:18.740Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 500,
+      "delayMs": 0
+    },
+    {
+      "id": "1774601958660_i5a98q",
+      "time": "2026-03-27T08:59:18.660Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1774601958437_9ouk64",
+      "time": "2026-03-27T08:59:18.437Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1774601935508_brdxhu",
+      "time": "2026-03-27T08:58:55.508Z",
+      "method": "POST",
+      "path": "/scm/productAudit/edit",
+      "status": 403,
+      "delayMs": 0
+    },
+    {
+      "id": "1774601935460_5xwdnd",
+      "time": "2026-03-27T08:58:55.460Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 500,
+      "delayMs": 0
+    },
+    {
+      "id": "1774601935406_fh2guh",
+      "time": "2026-03-27T08:58:55.406Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 500,
+      "delayMs": 0
+    },
+    {
+      "id": "1774600858336_o05xke",
+      "time": "2026-03-27T08:40:58.336Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1774600832241_ogu7r8",
+      "time": "2026-03-27T08:40:32.241Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1774600563857_6fthww",
+      "time": "2026-03-27T08:36:03.857Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1774600455839_jh8u3j",
+      "time": "2026-03-27T08:34:15.839Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    }
+  ]
+}

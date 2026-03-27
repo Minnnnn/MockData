@@ -7,6 +7,7 @@ export type EndpointDefinition = {
   operationId?: string;
   summary?: string;
   description?: string;
+  tags?: string[];
   enabled: boolean;
   requestSchema?: Record<string, unknown>;
   responseSchema?: Record<string, unknown>;
@@ -44,7 +45,9 @@ export type ServerRouteConfig = {
   endpointId: string;
   method: string;
   path: string;
+  description?: string;
   payload: unknown;
+  totalCount?: number;
   status: number;
   delayMs: number;
 };

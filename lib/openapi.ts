@@ -52,6 +52,9 @@ export function extractEndpoints(doc: Record<string, unknown>): EndpointDefiniti
       const operationId = stringOrUndefined(operation.operationId);
       const summary = stringOrUndefined(operation.summary);
       const description = stringOrUndefined(operation.description);
+      const tags = Array.isArray(operation.tags)
+        ? (operation.tags as unknown[]).filter((t): t is string => typeof t === 'string')
+        : undefined;
       const requestSchema = getRequestSchema(doc, operation);
       const { schema: responseSchema, statusCodes } = getResponseSchema(doc, operation);
 
@@ -63,6 +66,7 @@ export function extractEndpoints(doc: Record<string, unknown>): EndpointDefiniti
         operationId,
         summary,
         description,
+        tags,
         enabled: true,
         requestSchema,
         responseSchema,
@@ -99,12 +103,12 @@ function getRequestSchema(
     return undefined;
   }
 
-  const appJson = content['application/json'];
-  if (!isObject(appJson)) {
+  const mediaType = pickPreferredMediaType(content);
+  if (!mediaType) {
     return undefined;
   }
 
-  return resolveSchema(doc, appJson.schema);
+  return resolveSchema(doc, mediaType.schema);
 }
 
 function getResponseSchema(
@@ -125,18 +129,40 @@ function getResponseSchema(
       continue;
     }
 
-    const appJson = response.content['application/json'];
-    if (!isObject(appJson)) {
+    const mediaType = pickPreferredMediaType(response.content);
+    if (!mediaType) {
       continue;
     }
 
-    const schema = resolveSchema(doc, appJson.schema);
+    const schema = resolveSchema(doc, mediaType.schema);
     if (schema) {
       return { schema, statusCodes };
     }
   }
 
   return { schema: undefined, statusCodes };
+}
+
+function pickPreferredMediaType(content: Record<string, unknown>): Record<string, unknown> | undefined {
+  const entries = Object.entries(content).filter(([, value]) => isObject(value));
+  if (entries.length === 0) {
+    return undefined;
+  }
+
+  const preferred = entries.find(([key]) => isJsonLikeMediaType(key))
+    ?? entries.find(([key]) => key === '*/*')
+    ?? entries[0];
+
+  return preferred?.[1] as Record<string, unknown> | undefined;
+}
+
+function isJsonLikeMediaType(value: string): boolean {
+  const normalized = value.toLowerCase();
+  return normalized === 'application/json'
+    || normalized.startsWith('application/json;')
+    || normalized.endsWith('+json')
+    || normalized.includes('+json;')
+    || normalized === 'text/json';
 }
 
 function scoreResponseKey(code: string): number {

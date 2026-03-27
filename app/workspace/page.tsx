@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Card, Checkbox, Input, Tabs, TextArea } from '@heroui/react';
+import { Accordion, Button, Card, Chip, Input, Tabs, TextArea } from '@heroui/react';
 import { EndpointDefinition, EndpointMock, MockStrategyConfig, RequestLogEntry, ServerRouteConfig } from '@/lib/types';
 
 type WorkflowResponseError = { error?: string };
@@ -23,6 +23,7 @@ type WorkspaceBootstrap = {
 };
 
 const WORKSPACE_CACHE_KEY = 'mockdata-workspace';
+const DEFAULT_PORT = 3666;
 
 const DEFAULT_STRATEGY: MockStrategyConfig = {
   count: 1,
@@ -30,11 +31,7 @@ const DEFAULT_STRATEGY: MockStrategyConfig = {
   aiMode: false,
   anomalyRate: 0,
   fieldCoverage: 'all',
-  fieldRules: {
-    email: 'faker.internet.email',
-    phone: 'faker.phone.number',
-    price: 'random(10,1000)',
-  },
+  fieldRules: {},
 };
 
 export default function WorkspacePage() {
@@ -51,26 +48,40 @@ export default function WorkspacePage() {
   const [apiTs, setApiTs] = useState('');
 
   const [strategy, setStrategy] = useState<MockStrategyConfig>(DEFAULT_STRATEGY);
-  const [fieldRulesText, setFieldRulesText] = useState(JSON.stringify(DEFAULT_STRATEGY.fieldRules, null, 2));
-
   const [mocks, setMocks] = useState<Record<string, EndpointMock>>({});
   const [activeMockEndpointId, setActiveMockEndpointId] = useState('');
   const [activeMockJson, setActiveMockJson] = useState('[]');
-  const [tunePrompt, setTunePrompt] = useState('这个用户昵称太假了，改成更真实一点');
+  const [tunePrompt, setTunePrompt] = useState('让返回数据更贴近真实业务场景');
   const [tuneChanges, setTuneChanges] = useState<string[]>([]);
 
   const [serverRunning, setServerRunning] = useState(false);
-  const [port, setPort] = useState(3000);
   const [logs, setLogs] = useState<RequestLogEntry[]>([]);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   const selectedEndpoints = useMemo(() => {
     const picked = new Set(selectedIds);
     return endpoints.filter((item) => picked.has(item.id));
   }, [endpoints, selectedIds]);
+
+  const groupedEndpoints = useMemo(() => {
+    const map = new Map<string, EndpointDefinition[]>();
+    for (const item of endpoints) {
+      const tags = item.tags?.length ? item.tags : ['未分类'];
+      for (const tag of tags) {
+        if (!map.has(tag)) {
+          map.set(tag, []);
+        }
+        map.get(tag)!.push(item);
+      }
+    }
+    return Array.from(map.entries());
+  }, [endpoints]);
+
+  const canAdjustCount = useMemo(
+    () => selectedEndpoints.some((endpoint) => isPaginatedEndpoint(endpoint) || isArrayDataEndpoint(endpoint)),
+    [selectedEndpoints],
+  );
 
   const activeEndpoint = selectedEndpoints.find((item) => item.id === activeMockEndpointId) ?? selectedEndpoints[0];
 
@@ -90,11 +101,34 @@ export default function WorkspacePage() {
       setTypesTs(parsed.typesTs);
       setApiTs(parsed.apiTs);
     } catch {
-      setError('缓存读取失败，请重新上传 JSON。');
+      sessionStorage.removeItem(WORKSPACE_CACHE_KEY);
     } finally {
       setReady(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (!activeEndpoint) {
+      setActiveMockJson('[]');
+      return;
+    }
+    setActiveMockJson(JSON.stringify(mocks[activeEndpoint.id]?.items ?? [], null, 2));
+  }, [activeEndpoint, mocks]);
+
+  useEffect(() => {
+    if (!ready || !parseInfo || !openapiText.trim()) {
+      return;
+    }
+
+    persistWorkspace({
+      openapiText,
+      parseInfo,
+      endpoints,
+      selectedIds,
+      typesTs,
+      apiTs,
+    });
+  }, [ready, openapiText, parseInfo, endpoints, selectedIds, typesTs, apiTs]);
 
   function persistWorkspace(next: Partial<WorkspaceBootstrap>) {
     const payload: WorkspaceBootstrap = {
@@ -133,10 +167,19 @@ export default function WorkspacePage() {
     URL.revokeObjectURL(url);
   }
 
+  function toggleEndpoint(id: string, isSelected?: boolean) {
+    setSelectedIds((prev) => {
+      const currentlySelected = prev.includes(id);
+      const nextSelected = typeof isSelected === 'boolean' ? isSelected : !currentlySelected;
+      if (nextSelected) {
+        return [...new Set([...prev, id])];
+      }
+      return prev.filter((item) => item !== id);
+    });
+  }
+
   async function regenerateTypes() {
     setLoading(true);
-    setError(null);
-    setNotice(null);
     try {
       const data = await callWorkflow<{ typesTs: string; apiTs: string }>({
         action: 'generateTs',
@@ -145,63 +188,45 @@ export default function WorkspacePage() {
       });
       setTypesTs(data.typesTs);
       setApiTs(data.apiTs);
-      persistWorkspace({ selectedIds, typesTs: data.typesTs, apiTs: data.apiTs });
-      setNotice('TS 类型已更新');
     } catch (e) {
-      setError((e as Error).message);
+      console.error(e);
     } finally {
       setLoading(false);
     }
   }
 
-  async function generateMock() {
+  async function generateMockAndContinue() {
     setLoading(true);
-    setError(null);
-    setNotice(null);
     try {
-      const fieldRules = JSON.parse(fieldRulesText) as Record<string, string>;
       const data = await callWorkflow<{ mocks: Record<string, EndpointMock> }>({
         action: 'generateMock',
         openapiText,
         enabledIds: selectedIds,
-        strategy: { ...strategy, fieldRules },
+        strategy,
       });
       setMocks(data.mocks);
       const firstId = selectedEndpoints[0]?.id || Object.keys(data.mocks)[0] || '';
       setActiveMockEndpointId(firstId);
-      setActiveMockJson(JSON.stringify(data.mocks[firstId]?.items ?? [], null, 2));
+      setTuneChanges([]);
       setMockStep(3);
-      setNotice('Mock 数据生成完成');
     } catch (e) {
-      setError((e as Error).message);
+      console.error(e);
     } finally {
       setLoading(false);
     }
   }
 
   async function tuneMock() {
+    if (!activeEndpoint) return;
+
     setLoading(true);
-    setError(null);
     try {
       const data = await callWorkflow<{ output: string; changedKeys: string[] }>({
         action: 'tune',
         jsonText: activeMockJson,
         prompt: tunePrompt,
       });
-      setActiveMockJson(data.output);
-      setTuneChanges(data.changedKeys);
-      setNotice(`调优完成，变更 ${data.changedKeys.length} 项`);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function syncCurrentMock() {
-    if (!activeEndpoint) return;
-    try {
-      const value = JSON.parse(activeMockJson);
+      const nextItems = JSON.parse(data.output) as unknown[];
       setMocks((prev) => ({
         ...prev,
         [activeEndpoint.id]: {
@@ -209,28 +234,31 @@ export default function WorkspacePage() {
             endpointId: activeEndpoint.id,
             runtime: { status: 200, delayMs: 0 },
           }),
-          items: Array.isArray(value) ? value : [value],
+          items: Array.isArray(nextItems) ? nextItems : [nextItems],
         },
       }));
-      setError(null);
-      setNotice('当前 JSON 已同步');
-    } catch {
-      setError('JSON 不合法，无法同步');
+      setTuneChanges(data.changedKeys);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
   }
 
   async function startService() {
     setLoading(true);
-    setError(null);
     try {
       const routes: ServerRouteConfig[] = selectedEndpoints.map((endpoint) => {
         const endpointMock = mocks[endpoint.id];
-        const payload = endpointMock?.items?.length === 1 ? endpointMock.items[0] : endpointMock?.items ?? { ok: true };
+        const payload =
+          endpointMock?.items?.length === 1 ? endpointMock.items[0] : (endpointMock?.items ?? { ok: true });
         return {
           endpointId: endpoint.id,
           method: endpoint.method.toUpperCase(),
           path: endpoint.path,
+          description: endpoint.description || endpoint.summary || endpoint.operationId || endpoint.path,
           payload,
+          totalCount: endpointMock?.items?.length ?? 0,
           status: endpointMock?.runtime.status ?? 200,
           delayMs: endpointMock?.runtime.delayMs ?? 0,
         };
@@ -245,32 +273,22 @@ export default function WorkspacePage() {
       const res = await fetch('/api/mock-server', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'start', port }),
+        body: JSON.stringify({ action: 'start', port: DEFAULT_PORT }),
       });
       const state = await res.json();
       setServerRunning(Boolean(state.running));
       await refreshServerState();
-      setNotice(`服务已启动，逻辑端口 ${state.port}`);
     } catch (e) {
-      setError((e as Error).message);
+      console.error(e);
+      throw e;
     } finally {
       setLoading(false);
     }
   }
 
-  async function stopService() {
-    setLoading(true);
-    try {
-      await fetch('/api/mock-server', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'stop' }),
-      });
-      setServerRunning(false);
-      setNotice('服务已停止');
-    } finally {
-      setLoading(false);
-    }
+  async function enterServiceStep() {
+    await startService();
+    setMockStep(4);
   }
 
   async function refreshServerState() {
@@ -309,11 +327,7 @@ export default function WorkspacePage() {
   }
 
   if (!ready) {
-    return (
-      <main className='workspace-page'>
-        <p className='status-text'>正在加载工作区...</p>
-      </main>
-    );
+    return <main className='workspace-page' />;
   }
 
   if (!openapiText.trim() || !parseInfo) {
@@ -342,10 +356,6 @@ export default function WorkspacePage() {
           {parseInfo.title} · v{parseInfo.version} · {parseInfo.endpointCount} 个接口
         </p>
       </section>
-
-      {loading ? <p className='status-text'>处理中...</p> : null}
-      {error ? <p className='status-text status-text--error'>{error}</p> : null}
-      {notice ? <p className='status-text status-text--notice'>{notice}</p> : null}
 
       <Tabs
         selectedKey={activeTab}
@@ -385,7 +395,6 @@ export default function WorkspacePage() {
           <Card variant='default' className='panel-card'>
             <Card.Header className='panel-card__header'>
               <Card.Title>Mock 数据流程</Card.Title>
-              <Card.Description>四步：结构确认 → 策略生成 → 预览调优 → 启动服务</Card.Description>
             </Card.Header>
 
             <Card.Content>
@@ -396,47 +405,83 @@ export default function WorkspacePage() {
                     variant={mockStep === item ? 'primary' : 'outline'}
                     onPress={() => setMockStep(item)}
                   >
-                    {item}. {['结构确认', '策略生成', '预览调优', '启动服务'][item - 1]}
+                    {item}. {['接口确认', '策略生成', '预览调优', '服务状态'][item - 1]}
                   </Button>
                 ))}
               </div>
 
               {mockStep === 1 ? (
                 <section className='step-panel'>
-                  {endpoints.map((item) => {
-                    const checked = selectedIds.includes(item.id);
-                    return (
-                      <label key={item.id} className='endpoint-row'>
-                        <Checkbox
-                          isSelected={checked}
-                          onChange={(isSelected) => {
-                            if (isSelected) {
-                              setSelectedIds((prev) => [...new Set([...prev, item.id])]);
-                            } else {
-                              setSelectedIds((prev) => prev.filter((id) => id !== item.id));
-                            }
-                          }}
-                        />
-                        <div>
-                          <strong>
-                            {item.method.toUpperCase()} {item.path}
-                          </strong>
-                          <small>{item.operationId || item.summary || '无描述'}</small>
-                        </div>
-                      </label>
-                    );
-                  })}
+                  <div className='selection-summary'>
+                    <p>按照接口 tag 确认要参与 Mock 的结构</p>
+                    <span>
+                      已选 {selectedIds.length} / {endpoints.length}
+                    </span>
+                  </div>
+
+                  <Accordion allowsMultipleExpanded defaultExpandedKeys={groupedEndpoints.map(([tag]) => tag)}>
+                    {groupedEndpoints.map(([tag, groupItems]) => {
+                      const selectedCount = groupItems.filter((item) => selectedIds.includes(item.id)).length;
+
+                      return (
+                        <Accordion.Item key={tag} id={tag}>
+                          <Accordion.Heading>
+                            <Accordion.Trigger className='workspace-tag-trigger'>
+                              <span className='workspace-tag-trigger__name'>{tag}</span>
+                              <span className='workspace-tag-trigger__count'>
+                                {groupItems.length} 个接口 · 已选 {selectedCount}
+                              </span>
+                              <Accordion.Indicator />
+                            </Accordion.Trigger>
+                          </Accordion.Heading>
+                          <Accordion.Panel>
+                            <Accordion.Body className='workspace-tag-body'>
+                              <div className='endpoint-selection-grid'>
+                                {groupItems.map((item) => {
+                                  const selected = selectedIds.includes(item.id);
+
+                                  return (
+                                    <Card
+                                      key={item.id}
+                                      variant='default'
+                                      onClick={() => toggleEndpoint(item.id)}
+                                      className={`endpoint-option-card ${selected ? 'endpoint-option-card--selected' : ''}`}
+                                    >
+                                      <Card.Content className='endpoint-option-card__content'>
+                                        <div className='endpoint-option-card__header'>
+                                          <Chip className='endpoint-option-card__method' variant='primary'>
+                                            {item.method.toUpperCase()}
+                                          </Chip>
+                                          <div className='endpoint-option-card__state' aria-hidden='true'>
+                                            <span
+                                              className={`endpoint-option-card__indicator ${selected ? 'endpoint-option-card__indicator--selected' : ''}`}
+                                            />
+                                            <span>{selected ? '已选中' : '未选中'}</span>
+                                          </div>
+                                        </div>
+                                        <div className='endpoint-option-card__body'>
+                                          <strong className='endpoint-option-card__path'>{item.path}</strong>
+                                          <p className='workspace-endpoint-card__description'>
+                                            {item.description || item.summary || item.operationId || '暂无描述'}
+                                          </p>
+                                        </div>
+                                      </Card.Content>
+                                    </Card>
+                                  );
+                                })}
+                              </div>
+                            </Accordion.Body>
+                          </Accordion.Panel>
+                        </Accordion.Item>
+                      );
+                    })}
+                  </Accordion>
+
                   <div className='panel-actions'>
                     <Button variant='outline' onPress={regenerateTypes} isDisabled={selectedIds.length === 0 || loading}>
                       同步并更新 TS
                     </Button>
-                    <Button
-                      variant='primary'
-                      onPress={() => {
-                        persistWorkspace({ selectedIds });
-                        setMockStep(2);
-                      }}
-                    >
+                    <Button variant='primary' onPress={() => setMockStep(2)} isDisabled={selectedIds.length === 0}>
                       下一步
                     </Button>
                   </div>
@@ -451,21 +496,13 @@ export default function WorkspacePage() {
                       <Input
                         type='number'
                         min={1}
-                        value={String(strategy.count)}
+                        value={String(canAdjustCount ? strategy.count : 1)}
+                        disabled={!canAdjustCount}
                         onChange={(event) =>
                           setStrategy((prev) => ({ ...prev, count: Math.max(1, Number(event.target.value) || 1) }))
                         }
                       />
-                    </label>
-                    <label className='native-field'>
-                      随机模式
-                      <select
-                        value={strategy.random ? 'random' : 'fixed'}
-                        onChange={(event) => setStrategy((prev) => ({ ...prev, random: event.target.value === 'random' }))}
-                      >
-                        <option value='fixed'>固定</option>
-                        <option value='random'>随机</option>
-                      </select>
+                      <small className='native-field__hint'>仅对分页接口或 `data` 为数组的接口生效，其他接口固定生成 1 条。</small>
                     </label>
                     <label className='native-field'>
                       AI 模式
@@ -477,43 +514,16 @@ export default function WorkspacePage() {
                         <option value='on'>开启</option>
                       </select>
                     </label>
-                    <label className='native-field'>
-                      异常比例 (0-30)
-                      <Input
-                        type='number'
-                        min={0}
-                        max={30}
-                        value={String(strategy.anomalyRate)}
-                        onChange={(event) =>
-                          setStrategy((prev) => ({
-                            ...prev,
-                            anomalyRate: Math.max(0, Math.min(30, Number(event.target.value) || 0)),
-                          }))
-                        }
-                      />
-                    </label>
-                    <label className='native-field'>
-                      字段覆盖
-                      <select
-                        value={strategy.fieldCoverage}
-                        onChange={(event) =>
-                          setStrategy((prev) => ({ ...prev, fieldCoverage: event.target.value === 'key' ? 'key' : 'all' }))
-                        }
-                      >
-                        <option value='all'>全字段</option>
-                        <option value='key'>关键字段</option>
-                      </select>
-                    </label>
                   </div>
-                  <label className='native-field'>
-                    字段规则 JSON
-                    <TextArea value={fieldRulesText} onChange={(event) => setFieldRulesText(event.target.value)} rows={8} className='mono-area' />
-                  </label>
                   <div className='panel-actions'>
                     <Button variant='outline' onPress={() => setMockStep(1)}>
                       上一步
                     </Button>
-                    <Button variant='primary' onPress={generateMock} isDisabled={selectedIds.length === 0 || loading}>
+                    <Button
+                      variant='primary'
+                      onPress={generateMockAndContinue}
+                      isDisabled={selectedIds.length === 0 || loading}
+                    >
                       生成 Mock 并下一步
                     </Button>
                   </div>
@@ -526,11 +536,7 @@ export default function WorkspacePage() {
                     当前接口
                     <select
                       value={activeEndpoint?.id ?? ''}
-                      onChange={(event) => {
-                        const id = event.target.value;
-                        setActiveMockEndpointId(id);
-                        setActiveMockJson(JSON.stringify(mocks[id]?.items ?? [], null, 2));
-                      }}
+                      onChange={(event) => setActiveMockEndpointId(event.target.value)}
                     >
                       {selectedEndpoints.map((item) => (
                         <option key={item.id} value={item.id}>
@@ -540,31 +546,29 @@ export default function WorkspacePage() {
                     </select>
                   </label>
 
-                  <TextArea value={activeMockJson} onChange={(event) => setActiveMockJson(event.target.value)} rows={12} className='mono-area' />
-                  <label className='native-field'>
-                    调优指令
-                    <TextArea value={tunePrompt} onChange={(event) => setTunePrompt(event.target.value)} rows={3} />
-                  </label>
-                  <p className='status-text'>变更字段：{tuneChanges.length ? tuneChanges.join(', ') : '暂无'}</p>
+                  <TextArea value={activeMockJson} readOnly rows={12} className='mono-area' />
+                  {strategy.aiMode ? (
+                    <>
+                      <label className='native-field'>
+                        调优指令
+                        <TextArea value={tunePrompt} onChange={(event) => setTunePrompt(event.target.value)} rows={3} />
+                      </label>
+                      <p className='status-text'>变更字段：{tuneChanges.length ? tuneChanges.join(', ') : '暂无'}</p>
+                    </>
+                  ) : null}
                   <div className='panel-actions'>
                     <Button variant='outline' onPress={() => setMockStep(2)}>
                       上一步
                     </Button>
-                    <Button variant='outline' onPress={tuneMock} isDisabled={loading}>
-                      调优
-                    </Button>
-                    <Button variant='outline' onPress={syncCurrentMock}>
-                      同步 JSON
-                    </Button>
-                    <Button variant='outline' onPress={() => downloadText('mock.json', activeMockJson)}>
-                      下载 JSON
-                    </Button>
+                    {strategy.aiMode ? (
+                      <Button variant='outline' onPress={tuneMock} isDisabled={loading || !activeEndpoint}>
+                        调优
+                      </Button>
+                    ) : null}
                     <Button
                       variant='primary'
-                      onPress={() => {
-                        syncCurrentMock();
-                        setMockStep(4);
-                      }}
+                      onPress={enterServiceStep}
+                      isDisabled={loading || selectedEndpoints.length === 0}
                     >
                       下一步
                     </Button>
@@ -575,22 +579,13 @@ export default function WorkspacePage() {
               {mockStep === 4 ? (
                 <section className='step-panel'>
                   <div className='panel-actions'>
-                    <label className='native-field'>
-                      端口
-                      <Input type='number' value={String(port)} onChange={(event) => setPort(Number(event.target.value) || 3000)} />
-                    </label>
                     <Button variant='outline' onPress={() => setMockStep(3)}>
-                      上一步
-                    </Button>
-                    <Button variant='primary' isDisabled={loading || selectedEndpoints.length === 0} onPress={startService}>
-                      启动服务
-                    </Button>
-                    <Button variant='outline' isDisabled={loading || !serverRunning} onPress={stopService}>
-                      停止服务
+                      返回预览
                     </Button>
                     <Button variant='outline' onPress={refreshServerState}>
                       刷新日志
                     </Button>
+                    <span className='status-pill'>{serverRunning ? '服务运行中' : '服务未启动'}</span>
                   </div>
 
                   <div className='server-grid'>
@@ -631,11 +626,11 @@ export default function WorkspacePage() {
                                   ))}
                                 </select>
                               </label>
-                              <Button variant='outline' onPress={() => pushRuntimeToServer(endpoint.id)}>
+                              <Button variant='outline' onPress={() => pushRuntimeToServer(endpoint.id)} isDisabled={loading}>
                                 热更新
                               </Button>
                             </div>
-                            <pre className='mono-block'>{`curl http://localhost:${port}/api/mock${endpoint.path}`}</pre>
+                            <pre className='mono-block'>{`curl http://localhost:${DEFAULT_PORT}/mock-api${endpoint.path}`}</pre>
                           </Card.Content>
                         </Card>
                       );
@@ -667,4 +662,42 @@ export default function WorkspacePage() {
       </Tabs>
     </main>
   );
+}
+
+function isPaginatedEndpoint(endpoint: EndpointDefinition): boolean {
+  const lowerPath = endpoint.path.toLowerCase();
+  if (/page/.test(lowerPath)) {
+    return true;
+  }
+
+  return hasPaginatedShape(endpoint.responseSchema);
+}
+
+function isArrayDataEndpoint(endpoint: EndpointDefinition): boolean {
+  return getDataSchema(endpoint.responseSchema)?.type === 'array';
+}
+
+function hasPaginatedShape(schema?: Record<string, unknown>): boolean {
+  const dataSchema = getDataSchema(schema);
+  if (!dataSchema || !isRecord(dataSchema.properties)) {
+    return false;
+  }
+
+  const properties = dataSchema.properties;
+  const hasItems = isRecord(properties.items) && (properties.items.type === 'array' || properties.items.items !== undefined);
+  const hasTotal = properties.total !== undefined || properties.totalCount !== undefined;
+
+  return hasItems && hasTotal;
+}
+
+function getDataSchema(schema?: Record<string, unknown>): Record<string, unknown> | undefined {
+  if (!schema || !isRecord(schema.properties) || !isRecord(schema.properties.data)) {
+    return undefined;
+  }
+
+  return schema.properties.data;
+}
+
+function isRecord(value: unknown): value is Record<string, any> {
+  return typeof value === 'object' && value !== null;
 }

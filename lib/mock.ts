@@ -1,6 +1,9 @@
 import { faker } from '@faker-js/faker';
 import { EndpointDefinition, EndpointMock, MockStrategyConfig } from '@/lib/types';
 
+const FIXED_IMAGE_URL =
+  'https://health-img.buoudd.com/new-scm-back-test/new-scm-back-test/1774601460611109951163139102894.jpg';
+
 type GeneratedRoute = {
   id: string;
   routeName: { usage: string };
@@ -66,9 +69,7 @@ export function generateEndpointMocks(
   const result: Record<string, EndpointMock> = {};
 
   for (const endpoint of endpoints) {
-    const count = strategy.random
-      ? faker.number.int({ min: 1, max: Math.max(strategy.count, 1) })
-      : Math.max(strategy.count, 1);
+    const count = shouldGenerateMultiplePayloads(endpoint) ? Math.max(strategy.count, 1) : 1;
 
     const items: unknown[] = [];
 
@@ -77,7 +78,7 @@ export function generateEndpointMocks(
         faker.seed(hashCode(`${endpoint.id}-${i}`));
       }
 
-      const payload = mockFromSchema(endpoint.responseSchema, strategy, endpoint.path);
+      const payload = mockFromSchema(endpoint.responseSchema, strategy, endpoint.path, endpoint);
       items.push(maybeInjectAnomaly(payload, strategy.anomalyRate));
     }
 
@@ -277,40 +278,126 @@ function extractObjectFields(schema: unknown): Array<{ name: string; type: strin
 }
 
 function filterOpenApiDocument(openapiDocument: unknown, endpoints: EndpointDefinition[]): Record<string, unknown> {
-  const doc = JSON.parse(JSON.stringify(openapiDocument ?? {})) as Record<string, unknown>;
-  const paths = (doc.paths ?? {}) as Record<string, Record<string, unknown>>;
-  const enabled = new Set(endpoints.map((item) => `${item.method} ${item.path}`));
+  const source = JSON.parse(JSON.stringify(openapiDocument ?? {})) as Record<string, unknown>;
+  const sourcePaths = (source.paths ?? {}) as Record<string, Record<string, unknown>>;
+  const selectedKeys = new Set(endpoints.map((item) => `${item.method.toLowerCase()} ${item.path}`));
+  const nextPaths: Record<string, Record<string, unknown>> = {};
 
-  for (const path of Object.keys(paths)) {
-    const pathItem = paths[path];
-    if (!pathItem || typeof pathItem !== 'object') {
-      delete paths[path];
+  for (const endpoint of endpoints) {
+    const pathItem = sourcePaths[endpoint.path];
+    const operation = pathItem?.[endpoint.method];
+    if (!pathItem || !operation || typeof operation !== 'object') {
       continue;
     }
 
-    for (const method of Object.keys(pathItem)) {
-      const key = `${method.toLowerCase()} ${path}`;
-      if (!enabled.has(key)) {
-        delete pathItem[method];
+    if (!nextPaths[endpoint.path]) {
+      nextPaths[endpoint.path] = {};
+      for (const key of Object.keys(pathItem)) {
+        if (!isHttpMethodKey(key) && key !== '$ref') {
+          nextPaths[endpoint.path][key] = pathItem[key];
+        }
       }
     }
 
-    if (Object.keys(pathItem).length === 0) {
-      delete paths[path];
-    }
+    nextPaths[endpoint.path][endpoint.method] = operation;
   }
 
-  doc.paths = paths;
-  return doc;
+  const nextDoc: Record<string, unknown> = {
+    ...source,
+    paths: nextPaths,
+  };
+
+  const refsToVisit = new Set<string>();
+  const visitedRefs = new Set<string>();
+
+  collectRefsFromValue(nextDoc.paths, refsToVisit);
+
+  const sourceComponents = isRecord(source.components) ? (source.components as Record<string, unknown>) : {};
+  const nextComponents: Record<string, Record<string, unknown>> = {};
+
+  while (refsToVisit.size > 0) {
+    const [ref] = refsToVisit;
+    refsToVisit.delete(ref);
+
+    if (visitedRefs.has(ref) || !ref.startsWith('#/components/')) {
+      continue;
+    }
+    visitedRefs.add(ref);
+
+    const segments = ref.slice(2).split('/').map((part) => decodeURIComponent(part));
+    if (segments.length < 3) {
+      continue;
+    }
+
+    const [, sectionName, itemName] = segments;
+    const sourceSection = sourceComponents[sectionName];
+    if (!isRecord(sourceSection)) {
+      continue;
+    }
+
+    const sourceItem = sourceSection[itemName];
+    if (sourceItem === undefined) {
+      continue;
+    }
+
+    if (!nextComponents[sectionName]) {
+      nextComponents[sectionName] = {};
+    }
+    nextComponents[sectionName][itemName] = sourceItem as Record<string, unknown>;
+    collectRefsFromValue(sourceItem, refsToVisit);
+  }
+
+  if (Object.keys(nextComponents).length > 0) {
+    nextDoc.components = nextComponents;
+  } else {
+    delete nextDoc.components;
+  }
+
+  if (selectedKeys.size === 0) {
+    nextDoc.paths = {};
+    delete nextDoc.components;
+  }
+
+  return nextDoc;
+}
+
+function collectRefsFromValue(value: unknown, refs: Set<string>): void {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      collectRefsFromValue(item, refs);
+    }
+    return;
+  }
+
+  if (!isRecord(value)) {
+    return;
+  }
+
+  if (typeof value.$ref === 'string') {
+    refs.add(value.$ref);
+  }
+
+  for (const key of Object.keys(value)) {
+    collectRefsFromValue(value[key], refs);
+  }
+}
+
+function isHttpMethodKey(value: string): boolean {
+  return ['get', 'post', 'put', 'delete', 'patch', 'options', 'head', 'trace'].includes(value.toLowerCase());
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 function mockFromSchema(
   schema: Record<string, unknown> | undefined,
   strategy: MockStrategyConfig,
   contextKey: string,
+  endpoint: EndpointDefinition,
 ): unknown {
   if (!schema) {
-    return { message: 'ok' };
+    return {};
   }
 
   if (schema.example !== undefined) return schema.example;
@@ -331,7 +418,7 @@ function mockFromSchema(
 
       const propSchema = props[key];
       const fromRule = byRule(strategy.fieldRules[key], key);
-      out[key] = fromRule ?? mockFromSchema(propSchema, strategy, `${contextKey}.${key}`);
+      out[key] = fromRule ?? mockFromSchema(propSchema, strategy, `${contextKey}.${key}`, endpoint);
 
       if (out[key] === null || out[key] === undefined) {
         out[key] = inferByName(key);
@@ -348,15 +435,15 @@ function mockFromSchema(
 
   if (schema.type === 'array') {
     const itemsSchema = schema.items as Record<string, unknown> | undefined;
-    const count = strategy.random ? faker.number.int({ min: 1, max: 3 }) : 1;
-    return Array.from({ length: count }, (_, i) => mockFromSchema(itemsSchema, strategy, `${contextKey}[${i}]`));
+    const count = getArrayLengthForContext(endpoint, strategy, contextKey);
+    return Array.from({ length: count }, (_, i) => mockFromSchema(itemsSchema, strategy, `${contextKey}[${i}]`, endpoint));
   }
 
   if (schema.type === 'string') {
     if (schema.format === 'email') return faker.internet.email();
     if (schema.format === 'uuid') return faker.string.uuid();
-    if (schema.format === 'date-time') return faker.date.recent().toISOString();
-    if (schema.format === 'date') return faker.date.past().toISOString().slice(0, 10);
+    if (schema.format === 'date-time') return formatShanghaiDateTime(faker.date.recent());
+    if (schema.format === 'date') return formatShanghaiDateTime(faker.date.past());
     return faker.lorem.words(2);
   }
 
@@ -373,14 +460,53 @@ function mockFromSchema(
   }
 
   if (Array.isArray(schema.oneOf) && schema.oneOf[0]) {
-    return mockFromSchema(schema.oneOf[0] as Record<string, unknown>, strategy, contextKey);
+    return mockFromSchema(schema.oneOf[0] as Record<string, unknown>, strategy, contextKey, endpoint);
   }
 
   if (Array.isArray(schema.anyOf) && schema.anyOf[0]) {
-    return mockFromSchema(schema.anyOf[0] as Record<string, unknown>, strategy, contextKey);
+    return mockFromSchema(schema.anyOf[0] as Record<string, unknown>, strategy, contextKey, endpoint);
+  }
+
+  if (Array.isArray(schema.allOf) && schema.allOf.length > 0) {
+    return mockFromSchema(mergeAllOfSchemas(schema.allOf as Record<string, unknown>[]), strategy, contextKey, endpoint);
   }
 
   return { value: inferByName(contextKey) };
+}
+
+function mergeAllOfSchemas(items: Record<string, unknown>[]): Record<string, unknown> {
+  const merged: Record<string, unknown> = { type: 'object', properties: {}, required: [] };
+
+  for (const item of items) {
+    if (item.type && merged.type !== item.type) {
+      merged.type = item.type;
+    }
+
+    if (item.properties && typeof item.properties === 'object') {
+      merged.properties = {
+        ...(merged.properties as Record<string, unknown>),
+        ...(item.properties as Record<string, unknown>),
+      };
+    }
+
+    if (Array.isArray(item.required)) {
+      merged.required = [...new Set([...(merged.required as string[]), ...item.required as string[]])];
+    }
+
+    if (item.items) {
+      merged.items = item.items;
+    }
+
+    if (item.example !== undefined) {
+      merged.example = item.example;
+    }
+
+    if (item.default !== undefined) {
+      merged.default = item.default;
+    }
+  }
+
+  return merged;
 }
 
 function maybeInjectAnomaly(input: unknown, anomalyRate: number): unknown {
@@ -429,10 +555,79 @@ function inferByName(key: string): unknown {
   if (/phone|mobile/.test(lower)) return faker.phone.number('1##########');
   if (/name|title|nick/.test(lower)) return faker.person.fullName();
   if (/id$|_id$|uuid/.test(lower)) return faker.string.uuid();
-  if (/url|avatar|image/.test(lower)) return faker.image.url();
+  if (/img|image|avatar|cover|pic|photo/.test(lower)) return FIXED_IMAGE_URL;
+  if (/time|date|createdat|updatedat|createtime|updatetime/.test(lower)) return formatShanghaiDateTime();
+  if (/url/.test(lower)) return 'https://example.com';
   if (/price|amount|money/.test(lower)) return faker.number.float({ min: 10, max: 9999, fractionDigits: 2 });
   if (/status/.test(lower)) return 'success';
   return faker.lorem.word();
+}
+
+function shouldGenerateMultiplePayloads(endpoint: EndpointDefinition): boolean {
+  return isPaginatedEndpoint(endpoint);
+}
+
+function getArrayLengthForContext(endpoint: EndpointDefinition, strategy: MockStrategyConfig, contextKey: string): number {
+  if (isPaginatedItemsContext(endpoint, contextKey) || isArrayDataContext(endpoint, contextKey)) {
+    return Math.max(strategy.count, 1);
+  }
+
+  return 1;
+}
+
+function isPaginatedItemsContext(endpoint: EndpointDefinition, contextKey: string): boolean {
+  return isPaginatedEndpoint(endpoint) && /\.data\.items(\[\d+\])?$/.test(contextKey);
+}
+
+function isArrayDataContext(endpoint: EndpointDefinition, contextKey: string): boolean {
+  return isArrayDataEndpoint(endpoint) && /\.data(\[\d+\])?$/.test(contextKey);
+}
+
+function isPaginatedEndpoint(endpoint: EndpointDefinition): boolean {
+  const lowerPath = endpoint.path.toLowerCase();
+  if (/page/.test(lowerPath)) {
+    return true;
+  }
+
+  const dataSchema = getDataSchema(endpoint.responseSchema);
+  if (!dataSchema || !isRecord(dataSchema.properties)) {
+    return false;
+  }
+
+  const properties = dataSchema.properties as Record<string, unknown>;
+  const itemsSchema = properties.items;
+  const hasItems = isRecord(itemsSchema) && (itemsSchema.type === 'array' || itemsSchema.items !== undefined);
+  const hasTotal = properties.total !== undefined || properties.totalCount !== undefined;
+
+  return hasItems && hasTotal;
+}
+
+function isArrayDataEndpoint(endpoint: EndpointDefinition): boolean {
+  return getDataSchema(endpoint.responseSchema)?.type === 'array';
+}
+
+function getDataSchema(schema?: Record<string, unknown>): Record<string, unknown> | undefined {
+  if (!schema || !isRecord(schema.properties)) {
+    return undefined;
+  }
+
+  const data = (schema.properties as Record<string, unknown>).data;
+  return isRecord(data) ? data : undefined;
+}
+
+function formatShanghaiDateTime(input: Date = new Date()): string {
+  const formatter = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+
+  return formatter.format(input).replace(' ', ' ');
 }
 
 function safeIdentifier(value: string): string {
@@ -456,3 +651,4 @@ function hashCode(input: string): number {
   }
   return Math.abs(hash) || 1;
 }
+

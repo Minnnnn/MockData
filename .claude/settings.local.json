@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find D:/rep/mock-data/node_modules/react-aria-components/dist/ -name *.d.ts)",
+      "Bash(find D:/rep/mock-data/node_modules/ -path */react-aria-components* -name *.d.ts)",
+      "Bash(find D:/rep/mock-data/node_modules/.pnpm/ -path */react-stately*/dist/types.d.ts)",
+      "Bash(find D:/rep/mock-data/node_modules/.pnpm/ -path *react-stately/disclosure* -name *.d.ts)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

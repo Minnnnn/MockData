@@ -198,3 +198,5 @@ OpenAPI schema → JSON Schema → faker
 
 * 调用 LLM（OpenAI / 本地模型）
 
+### 优化
+- [ ] 首页可输入自己想要的json

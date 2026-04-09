@@ -22,18 +22,6 @@ type WorkspaceBootstrap = {
 
 const WORKSPACE_CACHE_KEY = 'mockdata-workspace';
 
-const METHOD_COLOR: Record<string, 'success' | 'danger' | 'warning' | 'accent' | 'default'> = {
-  get: 'success',
-  post: 'accent',
-  put: 'warning',
-  delete: 'danger',
-  patch: 'default',
-};
-
-function getMethodColor(method: string) {
-  return METHOD_COLOR[method.toLowerCase()] ?? 'default';
-}
-
 export default function Home() {
   const router = useRouter();
   const [step, setStep] = useState<'upload' | 'select'>('upload');
@@ -49,7 +37,7 @@ export default function Home() {
     const res = await fetch('/api/workflow', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
     const data = (await res.json()) as T & WorkflowResponseError;
     if (!res.ok) throw new Error(data.error ?? '请求失败');
@@ -95,7 +83,7 @@ export default function Home() {
       const tsData = await callWorkflow<{ typesTs: string; apiTs: string }>({
         action: 'generateTs',
         openapiText,
-        enabledIds: selectedIds,
+        enabledIds: selectedIds
       });
 
       const payload: WorkspaceBootstrap = {
@@ -104,7 +92,7 @@ export default function Home() {
         endpoints,
         selectedIds,
         typesTs: tsData.typesTs,
-        apiTs: tsData.apiTs,
+        apiTs: tsData.apiTs
       };
       sessionStorage.setItem(WORKSPACE_CACHE_KEY, JSON.stringify(payload));
       router.push('/workspace');
@@ -153,7 +141,7 @@ export default function Home() {
         <Card className='upload-card' variant='default'>
           <Card.Header className='upload-card__header'>
             <Card.Title>上传 OpenAPI JSON</Card.Title>
-            <Card.Description>黑白灰主题工作台，上传并解析后选择需要生成的接口</Card.Description>
+            <Card.Description>上传并解析后选择需要生成的接口</Card.Description>
           </Card.Header>
 
           <Card.Content className='upload-card__content'>
@@ -188,8 +176,8 @@ export default function Home() {
   }
 
   return (
-    <main className='select-page'>
-      <section className='select-header'>
+    <main className='workspace-page'>
+      <section className='workspace-header'>
         <div>
           <h1>{parseInfo?.title}</h1>
           <p>
@@ -203,20 +191,16 @@ export default function Home() {
 
       {error ? <p className='status-text status-text--error'>{error}</p> : null}
 
-      <Card variant='default' className='select-card'>
-        <Card.Header className='select-card__header'>
+      <Card variant='default' className='panel-card'>
+        <Card.Header className='panel-card__header'>
           <Card.Title>选择需要生成 TS 类型的接口</Card.Title>
           <Card.Description>默认全选，取消勾选的接口不会生成类型，Mock 数据也会跳过</Card.Description>
         </Card.Header>
 
-        <Card.Content className='select-card__content'>
-          <div className='select-toolbar'>
+        <Card.Content className='panel-card__content'>
+          <div className='selection-summary'>
             <label className='select-all-row'>
-              <Checkbox
-                isSelected={allSelected}
-                isIndeterminate={someSelected}
-                onChange={toggleAll}
-              />
+              <Checkbox isSelected={allSelected} isIndeterminate={someSelected} onChange={toggleAll} />
               <span>{allSelected ? '取消全选' : '全选'}</span>
             </label>
             <span className='select-count'>
@@ -234,7 +218,7 @@ export default function Home() {
               return (
                 <Accordion.Item key={tag} id={tag}>
                   <Accordion.Heading>
-                    <Accordion.Trigger className='tag-trigger'>
+                    <Accordion.Trigger className='workspace-tag-trigger'>
                       <label className='tag-trigger__check' onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           isSelected={groupAllSelected}
@@ -242,36 +226,52 @@ export default function Home() {
                           onChange={(checked) => toggleGroup(groupIds, checked)}
                         />
                       </label>
-                      <span className='tag-trigger__name'>{tag}</span>
+                      <span className='workspace-tag-trigger__name'>{tag}</span>
                       <span className='tag-trigger__count-wrap'>
                         <span className='tag-trigger__selected'>{selectedCount} 已选</span>
-                        <span className='tag-trigger__count'>{groupEndpoints.length} 个接口</span>
+                        <span className='workspace-tag-trigger__count'>{groupEndpoints.length} 个接口</span>
                       </span>
                       <Accordion.Indicator />
                     </Accordion.Trigger>
                   </Accordion.Heading>
                   <Accordion.Panel>
-                    <Accordion.Body className='tag-body'>
-                      {groupEndpoints.map((ep) => {
-                        const checked = selectedIds.includes(ep.id);
-                        return (
-                          <label key={ep.id} className={`ep-row${checked ? ' ep-row--selected' : ''}`}>
-                            <Checkbox
-                              isSelected={checked}
-                              onChange={(v) => toggleEndpoint(ep.id, v)}
-                            />
-                            <div className='ep-info'>
-                              <span className='ep-desc'>{ep.description ?? ep.summary ?? ep.path}</span>
-                              <div className='ep-meta'>
-                                <Chip color={getMethodColor(ep.method)} size='sm' className='ep-method'>
-                                  {ep.method.toUpperCase()}
-                                </Chip>
-                                <span className='ep-path'>{ep.path}</span>
-                              </div>
-                            </div>
-                          </label>
-                        );
-                      })}
+                    <Accordion.Body className='workspace-tag-body'>
+                      <div className='endpoint-selection-grid'>
+                        {groupEndpoints.map((ep) => {
+                          const checked = selectedIds.includes(ep.id);
+                          return (
+                            <Card
+                              key={ep.id}
+                              variant='default'
+                              onClick={() => toggleEndpoint(ep.id, !checked)}
+                              className={`endpoint-option-card ${checked ? 'endpoint-option-card--selected' : ''}`}
+                            >
+                              <Card.Content className='endpoint-option-card__content'>
+                                <div className='endpoint-option-card__header'>
+                                  <Chip className='endpoint-option-card__method' variant='primary'>
+                                    {ep.method.toUpperCase()}
+                                  </Chip>
+                                  <div className='endpoint-option-card__state' aria-hidden='true'>
+                                    <span
+                                      className={`endpoint-option-card__indicator ${checked ? 'endpoint-option-card__indicator--selected' : ''}`}
+                                    />
+                                    <span>{checked ? '已选中' : '未选中'}</span>
+                                  </div>
+                                </div>
+                                <div className='endpoint-option-card__body'>
+                                  <strong className='endpoint-option-card__path'>{ep.path}</strong>
+                                  <p className='workspace-endpoint-card__description'>
+                                    {ep.description ?? ep.summary ?? ep.path}
+                                  </p>
+                                </div>
+                                <label className='select-endpoint-checkbox' onClick={(e) => e.stopPropagation()}>
+                                  <Checkbox isSelected={checked} onChange={(v) => toggleEndpoint(ep.id, v)} />
+                                </label>
+                              </Card.Content>
+                            </Card>
+                          );
+                        })}
+                      </div>
                     </Accordion.Body>
                   </Accordion.Panel>
                 </Accordion.Item>
@@ -280,15 +280,11 @@ export default function Home() {
           </Accordion>
         </Card.Content>
 
-        <Card.Footer className='select-card__footer'>
+        <Card.Footer className='panel-actions'>
           <Button variant='outline' onPress={() => setStep('upload')}>
             上一步
           </Button>
-          <Button
-            variant='primary'
-            isDisabled={loading || selectedIds.length === 0}
-            onPress={handleGenerateTs}
-          >
+          <Button variant='primary' isDisabled={loading || selectedIds.length === 0} onPress={handleGenerateTs}>
             {loading ? '生成中...' : `下一步：生成 TS 类型（${selectedIds.length} 个接口）`}
           </Button>
         </Card.Footer>

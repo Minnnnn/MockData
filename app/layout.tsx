@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 
@@ -26,7 +27,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='zh-CN' className={`${sans.variable} ${mono.variable}`}>
-      <body style={{ fontFamily: 'var(--font-sans)' }}>{children}</body>
+      <body style={{ fontFamily: 'var(--font-sans)' }}>
+        <TooltipProvider>{children}</TooltipProvider>
+      </body>
     </html>
   );
 }

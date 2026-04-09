@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const mocks = generateEndpointMocks(endpoints, {
       count: 1,
       random: false,
-      aiMode: false,
+      aiMode: true,
       anomalyRate: 0,
       fieldCoverage: 'all',
       fieldRules: {},

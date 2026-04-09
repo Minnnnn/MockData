@@ -1,8 +1,6 @@
 import { faker } from '@faker-js/faker';
+import { getFixedImageUrls, pickImageUrl, pickRandomImageSubset } from '@/lib/fixed-image-url';
 import { EndpointDefinition, EndpointMock, MockStrategyConfig } from '@/lib/types';
-
-const FIXED_IMAGE_URL =
-  'https://health-img.buoudd.com/new-scm-back-test/new-scm-back-test/1774601460611109951163139102894.jpg';
 
 type GeneratedRoute = {
   id: string;
@@ -435,6 +433,10 @@ function mockFromSchema(
 
   if (schema.type === 'array') {
     const itemsSchema = schema.items as Record<string, unknown> | undefined;
+    if (isImageFieldKey(contextKey)) {
+      return pickRandomImageSubset(getFixedImageUrls());
+    }
+
     const count = getArrayLengthForContext(endpoint, strategy, contextKey);
     return Array.from({ length: count }, (_, i) => mockFromSchema(itemsSchema, strategy, `${contextKey}[${i}]`, endpoint));
   }
@@ -555,7 +557,7 @@ function inferByName(key: string): unknown {
   if (/phone|mobile/.test(lower)) return faker.phone.number('1##########');
   if (/name|title|nick/.test(lower)) return faker.person.fullName();
   if (/id$|_id$|uuid/.test(lower)) return faker.string.uuid();
-  if (/img|image|avatar|cover|pic|photo/.test(lower)) return FIXED_IMAGE_URL;
+  if (/img|image|avatar|cover|pic|photo/.test(lower)) return pickImageUrl();
   if (/time|date|createdat|updatedat|createtime|updatetime/.test(lower)) return formatShanghaiDateTime();
   if (/url/.test(lower)) return 'https://example.com';
   if (/price|amount|money/.test(lower)) return faker.number.float({ min: 10, max: 9999, fractionDigits: 2 });
@@ -650,5 +652,9 @@ function hashCode(input: string): number {
     hash |= 0;
   }
   return Math.abs(hash) || 1;
+}
+
+function isImageFieldKey(key: string): boolean {
+  return /(?:^|[.\[_])(img|image|avatar|cover|pic|photo)/i.test(key);
 }
 

@@ -50,6 +50,10 @@ export function stopMockServer() {
   });
 }
 
+export function resetMockServer() {
+  writeState(DEFAULT_STATE);
+}
+
 export function updateRouteRuntime(endpointId: string, status: number, delayMs: number) {
   const state = readState();
   writeState({

@@ -60,3 +60,12 @@ export type RequestLogEntry = {
   status: number;
   delayMs: number;
 };
+
+export type PersistedTunedMock = {
+  id: string;
+  workspaceId: string;
+  endpointId: string;
+  items: unknown[];
+  prompt: string;
+  updatedAt: string;
+};

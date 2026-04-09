@@ -9,16 +9,24 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@assistant-ui/react": "^0.12.24",
+    "@assistant-ui/react-markdown": "^0.12.8",
     "@faker-js/faker": "^8.0.2",
     "@heroui/react": "^3.0.1",
     "@heroui/styles": "^3.0.1",
+    "lucide-react": "^1.8.0",
     "next": "16.2.1",
+    "openai": "^6.34.0",
     "openapi-types": "^11.0.0",
+    "radix-ui": "^1.4.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "swagger-typescript-api": "^13.6.5"
+    "remark-gfm": "^4.0.1",
+    "swagger-typescript-api": "^13.6.5",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@gravity-ui/icons": "^2.18.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

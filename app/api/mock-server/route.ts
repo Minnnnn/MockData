@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import {
   configureMockServer,
   getMockServerState,
+  resetMockServer,
   startMockServer,
   stopMockServer,
   updateRouteRuntime,
@@ -31,6 +32,11 @@ export async function POST(request: Request) {
 
     if (action === 'stop') {
       stopMockServer();
+      return NextResponse.json(getMockServerState());
+    }
+
+    if (action === 'reset') {
+      resetMockServer();
       return NextResponse.json(getMockServerState());
     }
 

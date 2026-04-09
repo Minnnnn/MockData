@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getFixedImageUrls, pickImageUrl, pickRandomImageSubset } from '@/lib/fixed-image-url';
 import { getMockServerState, pushRequestLog, resolveMockResponse } from '@/lib/mock-server-store';
 
 async function handle(method: string, request: Request, path: string) {
@@ -13,7 +14,7 @@ async function handle(method: string, request: Request, path: string) {
       method,
       path,
       status: 404,
-      delayMs: 0,
+      delayMs: 0
     });
 
     return NextResponse.json({ error: '未匹配到该接口。' }, { status: 404 });
@@ -27,7 +28,7 @@ async function handle(method: string, request: Request, path: string) {
     method,
     path,
     status: route.status,
-    delayMs: route.delayMs,
+    delayMs: route.delayMs
   });
 
   const requestParams = await readRequestParams(request);
@@ -46,8 +47,6 @@ function getResolvedPath(request: Request, slug: string[] | undefined): string {
 
 type Params = { slug?: string[] };
 
-const FIXED_IMAGE_URL =
-  'https://health-img.buoudd.com/new-scm-back-test/new-scm-back-test/1774601460611109951163139102894.jpg';
 const COLLECTION_KEYS = ['items', 'list', 'records', 'rows', 'dataList', 'resultList'] as const;
 const PAGE_KEYS = ['page', 'pageNum', 'pageNo', 'current'] as const;
 const PAGE_SIZE_KEYS = ['pageSize', 'pagesize', 'limit', 'size'] as const;
@@ -60,21 +59,23 @@ function buildMockEnvelope(
     path?: string;
     totalCount?: number;
   },
-  requestParams: Record<string, unknown>,
+  requestParams: Record<string, unknown>
 ) {
-  if (route.status === 403) {
+  const isSuccessStatus = route.status >= 200 && route.status < 300;
+
+  if (!isSuccessStatus && route.status === 403) {
     return {
       rc: 1,
       msg: '请登录',
-      data: null,
+      data: null
     };
   }
 
-  if (route.status !== 200) {
+  if (!isSuccessStatus) {
     return {
       rc: 1,
       msg: `${route.description || route.path || '接口'}错误`,
-      data: null,
+      data: null
     };
   }
 
@@ -82,14 +83,14 @@ function buildMockEnvelope(
   return {
     rc: 0,
     msg: '',
-    data: normalizeMockValue(data),
+    data: normalizeMockValue(data)
   };
 }
 
 function buildSuccessData(
   payload: unknown,
   totalHint: number | undefined,
-  requestParams: Record<string, unknown>,
+  requestParams: Record<string, unknown>
 ): unknown {
   const normalizedPayload = unwrapPayload(payload);
   const paging = getPaging(requestParams, normalizedPayload, totalHint);
@@ -156,10 +157,11 @@ async function readRequestParams(request: Request): Promise<Record<string, unkno
 function getPaging(
   requestParams: Record<string, unknown>,
   payload: unknown,
-  totalHint: number | undefined,
+  totalHint: number | undefined
 ): { page: number; pageSize: number; total: number } | null {
-  const hasPageParam = PAGE_KEYS.some((key) => requestParams[key] !== undefined)
-    || PAGE_SIZE_KEYS.some((key) => requestParams[key] !== undefined);
+  const hasPageParam =
+    PAGE_KEYS.some((key) => requestParams[key] !== undefined) ||
+    PAGE_SIZE_KEYS.some((key) => requestParams[key] !== undefined);
 
   const payloadLooksPaged = Array.isArray(payload)
     ? Boolean(payload[0] && isRecord(payload[0]) && hasCollectionShape(payload[0]))
@@ -179,7 +181,7 @@ function getPaging(
 function applyPaginationToObject(
   input: Record<string, unknown>,
   total: number,
-  paging: { page: number; pageSize: number; total: number },
+  paging: { page: number; pageSize: number; total: number }
 ): Record<string, unknown> {
   const output: Record<string, unknown> = { ...input };
   const collectionKey = COLLECTION_KEYS.find((key) => Array.isArray(output[key]));
@@ -219,11 +221,7 @@ function materializeArray(input: unknown[], total: number): unknown[] {
   return Array.from({ length: total }, (_, index) => structuredClone(input[index % input.length]));
 }
 
-function applyCountFields(
-  output: Record<string, unknown>,
-  total: number,
-  paging: { page: number; pageSize: number },
-) {
+function applyCountFields(output: Record<string, unknown>, total: number, paging: { page: number; pageSize: number }) {
   const hasMore = paging.page * paging.pageSize < total;
   const totalKeys = ['total', 'totalCount'];
   const hasMoreKeys = ['hasMore', 'hasmore'];
@@ -247,6 +245,10 @@ function applyCountFields(
 
 function normalizeMockValue(value: unknown, key = ''): unknown {
   if (Array.isArray(value)) {
+    if (isImageKey(key)) {
+      return normalizeImageArray(value);
+    }
+
     return value.map((item) => normalizeMockValue(item, key));
   }
 
@@ -260,7 +262,7 @@ function normalizeMockValue(value: unknown, key = ''): unknown {
 
   if (typeof value === 'string') {
     if (isImageKey(key)) {
-      return FIXED_IMAGE_URL;
+      return pickImageUrl();
     }
 
     if (isTimeKey(key) || looksLikeDateTime(value)) {
@@ -269,6 +271,23 @@ function normalizeMockValue(value: unknown, key = ''): unknown {
   }
 
   return value;
+}
+
+function normalizeImageArray(value: unknown[]): string[] {
+  const fixedImageUrls = getFixedImageUrls();
+  const source = value
+    .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    .map((item) => item.trim());
+
+  if (source.length === 0) {
+    return pickRandomImageSubset(fixedImageUrls);
+  }
+
+  if (source.length <= 3) {
+    return source;
+  }
+
+  return pickRandomImageSubset(source);
 }
 
 function unwrapPayload(value: unknown): unknown {
@@ -353,8 +372,7 @@ function isTimeKey(value: string) {
 }
 
 function looksLikeDateTime(value: string) {
-  return /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}/.test(value)
-    || /^\d{4}-\d{2}-\d{2}T/.test(value);
+  return /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}/.test(value) || /^\d{4}-\d{2}-\d{2}T/.test(value);
 }
 
 function formatShanghaiDateTime(value: string | Date = new Date()) {
@@ -368,8 +386,10 @@ function formatShanghaiDateTime(value: string | Date = new Date()) {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: false,
-    }).format(new Date()).replace(' ', ' ');
+      hour12: false
+    })
+      .format(new Date())
+      .replace(' ', ' ');
   }
 
   return new Intl.DateTimeFormat('sv-SE', {
@@ -380,8 +400,10 @@ function formatShanghaiDateTime(value: string | Date = new Date()) {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: false,
-  }).format(date).replace(' ', ' ');
+    hour12: false
+  })
+    .format(date)
+    .replace(' ', ' ');
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

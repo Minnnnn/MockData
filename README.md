@@ -203,3 +203,4 @@ OpenAPI schema → JSON Schema → faker
 - [ ] 可以做字段映射 pageSize->limit
 - [ ] 增加图片列表，每次随机取
 - [ ] 对入参做简单校验
+- [ ] ai生成数据保存，相同字段使用缓存，同时固定数据也可以直接使用，不再重复生成

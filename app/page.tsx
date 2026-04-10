@@ -1,7 +1,7 @@
 'use client';
 
+import { memo, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
 import { Accordion, Button, Card, Checkbox, Chip, TextArea } from '@heroui/react';
 import { EndpointDefinition } from '@/lib/types';
 
@@ -116,7 +116,9 @@ export default function Home() {
   }, [endpoints]);
 
   const allIds = endpoints.map((e) => e.id);
-  const allSelected = allIds.length > 0 && allIds.every((id) => selectedIds.includes(id));
+  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const defaultExpandedTags = useMemo(() => (tagGroups[0] ? [tagGroups[0][0]] : []), [tagGroups]);
+  const allSelected = allIds.length > 0 && allIds.every((id) => selectedIdSet.has(id));
   const someSelected = !allSelected && selectedIds.length > 0;
 
   function toggleAll() {
@@ -214,12 +216,12 @@ export default function Home() {
             </span>
           </div>
 
-          <Accordion allowsMultipleExpanded defaultExpandedKeys={tagGroups.map(([tag]) => tag)}>
+          <Accordion allowsMultipleExpanded defaultExpandedKeys={defaultExpandedTags}>
             {tagGroups.map(([tag, groupEndpoints]) => {
               const groupIds = groupEndpoints.map((e) => e.id);
-              const selectedCount = groupIds.filter((id) => selectedIds.includes(id)).length;
-              const groupAllSelected = groupIds.every((id) => selectedIds.includes(id));
-              const groupSomeSelected = !groupAllSelected && groupIds.some((id) => selectedIds.includes(id));
+              const selectedCount = groupIds.filter((id) => selectedIdSet.has(id)).length;
+              const groupAllSelected = groupIds.every((id) => selectedIdSet.has(id));
+              const groupSomeSelected = !groupAllSelected && groupIds.some((id) => selectedIdSet.has(id));
 
               return (
                 <Accordion.Item key={tag} id={tag}>
@@ -244,37 +246,14 @@ export default function Home() {
                     <Accordion.Body className='workspace-tag-body'>
                       <div className='endpoint-selection-grid'>
                         {groupEndpoints.map((ep) => {
-                          const checked = selectedIds.includes(ep.id);
+                          const checked = selectedIdSet.has(ep.id);
                           return (
-                            <Card
+                            <EndpointSelectionCard
                               key={ep.id}
-                              variant='default'
-                              onClick={() => toggleEndpoint(ep.id, !checked)}
-                              className={`endpoint-option-card ${checked ? 'endpoint-option-card--selected' : ''}`}
-                            >
-                              <Card.Content className='endpoint-option-card__content'>
-                                <div className='endpoint-option-card__header'>
-                                  <Chip className='endpoint-option-card__method' variant='primary'>
-                                    {ep.method.toUpperCase()}
-                                  </Chip>
-                                  <div className='endpoint-option-card__state' aria-hidden='true'>
-                                    <span
-                                      className={`endpoint-option-card__indicator ${checked ? 'endpoint-option-card__indicator--selected' : ''}`}
-                                    />
-                                    <span>{checked ? '已选中' : '未选中'}</span>
-                                  </div>
-                                </div>
-                                <div className='endpoint-option-card__body'>
-                                  <strong className='endpoint-option-card__path'>{ep.path}</strong>
-                                  <p className='workspace-endpoint-card__description'>
-                                    {ep.description ?? ep.summary ?? ep.path}
-                                  </p>
-                                </div>
-                                <label className='select-endpoint-checkbox' onClick={(e) => e.stopPropagation()}>
-                                  <Checkbox isSelected={checked} onChange={(v) => toggleEndpoint(ep.id, v)} />
-                                </label>
-                              </Card.Content>
-                            </Card>
+                              endpoint={ep}
+                              checked={checked}
+                              onToggle={toggleEndpoint}
+                            />
                           );
                         })}
                       </div>
@@ -298,3 +277,40 @@ export default function Home() {
     </main>
   );
 }
+
+const EndpointSelectionCard = memo(function EndpointSelectionCard({
+  endpoint,
+  checked,
+  onToggle
+}: {
+  endpoint: EndpointDefinition;
+  checked: boolean;
+  onToggle: (id: string, checked: boolean) => void;
+}) {
+  return (
+    <Card
+      variant='default'
+      onClick={() => onToggle(endpoint.id, !checked)}
+      className={`endpoint-option-card ${checked ? 'endpoint-option-card--selected' : ''}`}
+    >
+      <Card.Content className='endpoint-option-card__content'>
+        <div className='endpoint-option-card__header'>
+          <Chip className='endpoint-option-card__method' variant='primary'>
+            {endpoint.method.toUpperCase()}
+          </Chip>
+          <div className='endpoint-option-card__state' aria-hidden='true'>
+            <span className={`endpoint-option-card__indicator ${checked ? 'endpoint-option-card__indicator--selected' : ''}`} />
+            <span>{checked ? '已选中' : '未选中'}</span>
+          </div>
+        </div>
+        <div className='endpoint-option-card__body'>
+          <strong className='endpoint-option-card__path'>{endpoint.path}</strong>
+          <p className='workspace-endpoint-card__description'>{endpoint.description ?? endpoint.summary ?? endpoint.path}</p>
+        </div>
+        <label className='select-endpoint-checkbox' onClick={(e) => e.stopPropagation()}>
+          <Checkbox isSelected={checked} onChange={(value) => onToggle(endpoint.id, value)} />
+        </label>
+      </Card.Content>
+    </Card>
+  );
+});

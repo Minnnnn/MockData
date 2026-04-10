@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Accordion, Alert, Button, Card, Chip, Input, Spinner, Tabs, TextArea } from '@heroui/react';
 import { TuneAssistantDialog } from '@/components/tune-assistant-dialog';
@@ -74,11 +74,14 @@ export default function WorkspacePage() {
   const [serverRunning, setServerRunning] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const mockDraftSourceRef = useRef<Record<string, string>>({});
 
   const selectedEndpoints = useMemo(() => {
     const picked = new Set(selectedIds);
     return endpoints.filter((item) => picked.has(item.id));
   }, [endpoints, selectedIds]);
+  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const selectedEndpointIdSet = useMemo(() => new Set(selectedEndpoints.map((item) => item.id)), [selectedEndpoints]);
 
   const groupedEndpoints = useMemo(() => {
     const map = new Map<string, EndpointDefinition[]>();
@@ -93,6 +96,12 @@ export default function WorkspacePage() {
     }
     return Array.from(map.entries());
   }, [endpoints]);
+  const defaultExpandedTags = useMemo(() => (groupedEndpoints[0] ? [groupedEndpoints[0][0]] : []), [groupedEndpoints]);
+  const tunedEndpointIdSet = useMemo(() => new Set(tunedEndpointIds), [tunedEndpointIds]);
+  const activeEndpoint = useMemo(
+    () => selectedEndpoints.find((item) => item.id === activeMockEndpointId) ?? selectedEndpoints[0] ?? null,
+    [selectedEndpoints, activeMockEndpointId]
+  );
 
   const canAdjustCount = useMemo(
     () => selectedEndpoints.some((endpoint) => isPaginatedEndpoint(endpoint) || isArrayDataEndpoint(endpoint)),
@@ -148,7 +157,7 @@ export default function WorkspacePage() {
       const records = await listPersistedTunedMocks(workspaceId);
       setTunedEndpointIds(records.map((item) => item.endpointId));
     })();
-  }, [ready, workspaceId, mocks]);
+  }, [ready, workspaceId]);
 
   useEffect(() => {
     if (!selectedEndpoints.length) {
@@ -156,20 +165,48 @@ export default function WorkspacePage() {
     }
 
     const firstId = selectedEndpoints[0]?.id ?? '';
-    if (!activeMockEndpointId || !selectedEndpoints.some((item) => item.id === activeMockEndpointId)) {
+    if (!activeMockEndpointId || !selectedEndpointIdSet.has(activeMockEndpointId)) {
       setActiveMockEndpointId(firstId);
     }
 
-    setTuneTargetIds((prev) => prev.filter((id) => selectedEndpoints.some((item) => item.id === id)));
-  }, [selectedEndpoints, activeMockEndpointId]);
+    setTuneTargetIds((prev) => prev.filter((id) => selectedEndpointIdSet.has(id)));
+  }, [selectedEndpoints, selectedEndpointIdSet, activeMockEndpointId]);
 
   useEffect(() => {
-    const nextDrafts: Record<string, string> = {};
+    const nextSource: Record<string, string> = {};
     for (const [endpointId, endpointMock] of Object.entries(mocks)) {
-      nextDrafts[endpointId] = JSON.stringify(getEditableMockPayload(endpointMock), null, 2);
+      nextSource[endpointId] = JSON.stringify(getEditableMockPayload(endpointMock), null, 2);
     }
-    setMockDrafts(nextDrafts);
-    setMockDraftErrors({});
+
+    setMockDrafts((prev) => {
+      const nextDrafts: Record<string, string> = {};
+      let changed = false;
+
+      for (const [endpointId, serialized] of Object.entries(nextSource)) {
+        const previousDraft = prev[endpointId];
+        const previousSource = mockDraftSourceRef.current[endpointId];
+        const nextDraft = previousDraft === undefined || previousDraft === previousSource ? serialized : previousDraft;
+        nextDrafts[endpointId] = nextDraft;
+        if (nextDraft !== previousDraft) {
+          changed = true;
+        }
+      }
+
+      if (Object.keys(prev).length !== Object.keys(nextDrafts).length) {
+        changed = true;
+      }
+
+      mockDraftSourceRef.current = nextSource;
+      return changed ? nextDrafts : prev;
+    });
+
+    setMockDraftErrors((prev) => {
+      const nextEntries = Object.entries(prev).filter(([endpointId]) => endpointId in nextSource);
+      if (nextEntries.length === Object.keys(prev).length) {
+        return prev;
+      }
+      return Object.fromEntries(nextEntries);
+    });
   }, [mocks]);
 
   useEffect(() => {
@@ -757,9 +794,9 @@ export default function WorkspacePage() {
                     </div>
                   </div>
 
-                  <Accordion allowsMultipleExpanded defaultExpandedKeys={groupedEndpoints.map(([tag]) => tag)}>
+                  <Accordion allowsMultipleExpanded defaultExpandedKeys={defaultExpandedTags}>
                     {groupedEndpoints.map(([tag, groupItems]) => {
-                      const selectedCount = groupItems.filter((item) => selectedIds.includes(item.id)).length;
+                      const selectedCount = groupItems.filter((item) => selectedIdSet.has(item.id)).length;
 
                       return (
                         <Accordion.Item key={tag} id={tag}>
@@ -776,35 +813,15 @@ export default function WorkspacePage() {
                             <Accordion.Body className='workspace-tag-body'>
                               <div className='endpoint-selection-grid'>
                                 {groupItems.map((item) => {
-                                  const selected = selectedIds.includes(item.id);
+                                  const selected = selectedIdSet.has(item.id);
 
                                   return (
-                                    <Card
+                                    <WorkspaceSelectionCard
                                       key={item.id}
-                                      variant='default'
-                                      onClick={() => toggleEndpoint(item.id)}
-                                      className={`endpoint-option-card ${selected ? 'endpoint-option-card--selected' : ''}`}
-                                    >
-                                      <Card.Content className='endpoint-option-card__content'>
-                                        <div className='endpoint-option-card__header'>
-                                          <Chip className='endpoint-option-card__method' variant='primary'>
-                                            {item.method.toUpperCase()}
-                                          </Chip>
-                                          <div className='endpoint-option-card__state' aria-hidden='true'>
-                                            <span
-                                              className={`endpoint-option-card__indicator ${selected ? 'endpoint-option-card__indicator--selected' : ''}`}
-                                            />
-                                            <span>{selected ? '已选中' : '未选中'}</span>
-                                          </div>
-                                        </div>
-                                        <div className='endpoint-option-card__body'>
-                                          <strong className='endpoint-option-card__path'>{item.path}</strong>
-                                          <p className='workspace-endpoint-card__description'>
-                                            {item.description || item.summary || item.operationId || '暂无描述'}
-                                          </p>
-                                        </div>
-                                      </Card.Content>
-                                    </Card>
+                                      endpoint={item}
+                                      selected={selected}
+                                      onToggle={toggleEndpoint}
+                                    />
                                   );
                                 })}
                               </div>
@@ -887,42 +904,53 @@ export default function WorkspacePage() {
                     <span className='status-pill'>{serverRunning ? '服务运行中' : '服务未启动'}</span>
                   </div>
 
-                  <div className='server-grid'>
-                    {selectedEndpoints.map((endpoint) => {
-                      const runtime = mocks[endpoint.id]?.runtime ?? { status: 200, delayMs: 0 };
-                      const previewJson = mockDrafts[endpoint.id] ?? JSON.stringify(getEditableMockPayload(mocks[endpoint.id]), null, 2);
-                      const tuned = tunedEndpointIds.includes(endpoint.id);
-                      const draftError = mockDraftErrors[endpoint.id];
-                      const updateState = endpointUpdateState[endpoint.id] ?? 'idle';
-                      const currentInlineTuneOpen = Boolean(inlineTuneOpen[endpoint.id]);
-                      const currentInlineTunePrompt = inlineTunePrompts[endpoint.id] ?? tunePrompt;
-                      return (
-                        <Card key={endpoint.id} variant='default' className='server-card'>
+                  <div className='server-grid server-grid--focused'>
+                    <div className='server-endpoint-list'>
+                      {selectedEndpoints.map((endpoint) => (
+                        <ServerEndpointNavButton
+                          key={endpoint.id}
+                          endpoint={endpoint}
+                          active={endpoint.id === activeEndpoint?.id}
+                          tuned={tunedEndpointIdSet.has(endpoint.id)}
+                          updateState={endpointUpdateState[endpoint.id] ?? 'idle'}
+                          onPress={() => setActiveMockEndpointId(endpoint.id)}
+                        />
+                      ))}
+                    </div>
+                    <div className='server-detail-panel'>
+                      {activeEndpoint ? (
+                        <Card key={activeEndpoint.id} variant='default' className='server-card'>
                           <Card.Header>
                             <Alert
                               status={
-                                updateState === 'success' ? 'success' : updateState === 'error' ? 'danger' : undefined
+                                (endpointUpdateState[activeEndpoint.id] ?? 'idle') === 'success'
+                                  ? 'success'
+                                  : (endpointUpdateState[activeEndpoint.id] ?? 'idle') === 'error'
+                                    ? 'danger'
+                                    : undefined
                               }
                               style={{ marginBottom: '10px' }}
                             >
                               <Alert.Indicator>
-                                {updateState === 'loading' ? <Spinner size='sm' /> : null}
+                                {endpointUpdateState[activeEndpoint.id] === 'loading' ? <Spinner size='sm' /> : null}
                               </Alert.Indicator>
                               <Alert.Content>
                                 <Card.Title>
-                                  {endpoint.method.toUpperCase()} {endpoint.path}
+                                  {activeEndpoint.method.toUpperCase()} {activeEndpoint.path}
                                 </Card.Title>
                               </Alert.Content>
                             </Alert>
-                            {tuned ? <Card.Description>已优先使用 AI 调优数据</Card.Description> : null}
+                            {tunedEndpointIdSet.has(activeEndpoint.id) ? <Card.Description>已优先使用 AI 调优数据</Card.Description> : null}
                           </Card.Header>
                           <Card.Content>
                             <div className='runtime-grid'>
                               <label className='native-field'>
                                 状态码
                                 <select
-                                  value={runtime.status}
-                                  onChange={(event) => updateRuntime(endpoint.id, 'status', Number(event.target.value))}
+                                  value={mocks[activeEndpoint.id]?.runtime?.status ?? 200}
+                                  onChange={(event) =>
+                                    updateRuntime(activeEndpoint.id, 'status', Number(event.target.value))
+                                  }
                                 >
                                   {[200, 403, 500].map((code) => (
                                     <option key={code} value={code}>
@@ -937,15 +965,15 @@ export default function WorkspacePage() {
                                   type='number'
                                   min={0}
                                   step={100}
-                                  value={String(runtime.delayMs)}
+                                  value={String(mocks[activeEndpoint.id]?.runtime?.delayMs ?? 0)}
                                   onChange={(event) =>
-                                    updateRuntime(endpoint.id, 'delayMs', Number(event.target.value))
+                                    updateRuntime(activeEndpoint.id, 'delayMs', Number(event.target.value))
                                   }
                                 />
                               </label>
                               <Button
                                 variant='outline'
-                                onPress={() => pushRuntimeToServer(endpoint.id)}
+                                onPress={() => pushRuntimeToServer(activeEndpoint.id)}
                                 isDisabled={loading}
                               >
                                 热更新
@@ -953,7 +981,7 @@ export default function WorkspacePage() {
                             </div>
                             <div className='server-card__meta'>
                               <div className='server-card__console'>
-                                <pre className='mono-block'>{`curl http://localhost:${DEFAULT_PORT}/mock-api${endpoint.path}`}</pre>
+                                <pre className='mono-block'>{`curl http://localhost:${DEFAULT_PORT}/mock-api${activeEndpoint.path}`}</pre>
                                 <div className='mock-preview-panel'>
                                   <div className='mock-preview-panel__header'>
                                     <h3>Mock 数据预览</h3>
@@ -962,7 +990,7 @@ export default function WorkspacePage() {
                                       onPress={() =>
                                         setInlineTuneOpen((prev) => ({
                                           ...prev,
-                                          [endpoint.id]: !prev[endpoint.id]
+                                          [activeEndpoint.id]: !prev[activeEndpoint.id]
                                         }))
                                       }
                                       isDisabled={loading}
@@ -970,15 +998,15 @@ export default function WorkspacePage() {
                                       AI 调优
                                     </Button>
                                   </div>
-                                  {currentInlineTuneOpen ? (
+                                  {inlineTuneOpen[activeEndpoint.id] ? (
                                     <div className='inline-tune-panel'>
                                       <TextArea
                                         fullWidth
-                                        value={currentInlineTunePrompt}
+                                        value={inlineTunePrompts[activeEndpoint.id] ?? tunePrompt}
                                         onChange={(event) =>
                                           setInlineTunePrompts((prev) => ({
                                             ...prev,
-                                            [endpoint.id]: event.target.value
+                                            [activeEndpoint.id]: event.target.value
                                           }))
                                         }
                                         rows={3}
@@ -990,7 +1018,7 @@ export default function WorkspacePage() {
                                           onPress={() =>
                                             setInlineTuneOpen((prev) => ({
                                               ...prev,
-                                              [endpoint.id]: false
+                                              [activeEndpoint.id]: false
                                             }))
                                           }
                                           style={{ marginRight: '5px' }}
@@ -999,7 +1027,7 @@ export default function WorkspacePage() {
                                         </Button>
                                         <Button
                                           variant='primary'
-                                          onPress={() => handleInlineTune(endpoint.id)}
+                                          onPress={() => handleInlineTune(activeEndpoint.id)}
                                           isDisabled={loading}
                                         >
                                           提交调优
@@ -1008,23 +1036,30 @@ export default function WorkspacePage() {
                                     </div>
                                   ) : null}
                                   <TextArea
-                                    value={previewJson}
-                                    onChange={(event) => updateMockDraft(endpoint.id, event.target.value)}
+                                    value={
+                                      mockDrafts[activeEndpoint.id] ??
+                                      JSON.stringify(getEditableMockPayload(mocks[activeEndpoint.id]), null, 2)
+                                    }
+                                    onChange={(event) => updateMockDraft(activeEndpoint.id, event.target.value)}
                                     rows={18}
                                     className='mono-area mono-area--preview'
                                   />
-                                  {draftError ? <p className='status-text status-text--error'>{draftError}</p> : null}
+                                  {mockDraftErrors[activeEndpoint.id] ? (
+                                    <p className='status-text status-text--error'>{mockDraftErrors[activeEndpoint.id]}</p>
+                                  ) : null}
                                 </div>
                               </div>
                               <div className='server-card__tips'>
                                 <h3>请求参数提示</h3>
-                                {renderRequestParamsHint(endpoint.requestSchema)}
+                                {renderRequestParamsHint(activeEndpoint.requestSchema)}
                               </div>
                             </div>
                           </Card.Content>
                         </Card>
-                      );
-                    })}
+                      ) : (
+                        <p className='status-text'>当前没有可预览的接口。</p>
+                      )}
+                    </div>
                   </div>
                 </section>
               ) : null}
@@ -1051,6 +1086,85 @@ export default function WorkspacePage() {
     </main>
   );
 }
+
+const WorkspaceSelectionCard = memo(function WorkspaceSelectionCard({
+  endpoint,
+  selected,
+  onToggle
+}: {
+  endpoint: EndpointDefinition;
+  selected: boolean;
+  onToggle: (id: string, isSelected?: boolean) => void;
+}) {
+  return (
+    <Card
+      variant='default'
+      onClick={() => onToggle(endpoint.id)}
+      className={`endpoint-option-card ${selected ? 'endpoint-option-card--selected' : ''}`}
+    >
+      <Card.Content className='endpoint-option-card__content'>
+        <div className='endpoint-option-card__header'>
+          <Chip className='endpoint-option-card__method' variant='primary'>
+            {endpoint.method.toUpperCase()}
+          </Chip>
+          <div className='endpoint-option-card__state' aria-hidden='true'>
+            <span className={`endpoint-option-card__indicator ${selected ? 'endpoint-option-card__indicator--selected' : ''}`} />
+            <span>{selected ? '已选中' : '未选中'}</span>
+          </div>
+        </div>
+        <div className='endpoint-option-card__body'>
+          <strong className='endpoint-option-card__path'>{endpoint.path}</strong>
+          <p className='workspace-endpoint-card__description'>
+            {endpoint.description || endpoint.summary || endpoint.operationId || '暂无描述'}
+          </p>
+        </div>
+      </Card.Content>
+    </Card>
+  );
+});
+
+const ServerEndpointNavButton = memo(function ServerEndpointNavButton({
+  endpoint,
+  active,
+  tuned,
+  updateState,
+  onPress
+}: {
+  endpoint: EndpointDefinition;
+  active: boolean;
+  tuned: boolean;
+  updateState: 'idle' | 'loading' | 'success' | 'error';
+  onPress: () => void;
+}) {
+  return (
+    <button
+      type='button'
+      className={`server-endpoint-nav ${active ? 'server-endpoint-nav--active' : ''}`}
+      onClick={onPress}
+    >
+      <div className='server-endpoint-nav__header'>
+        <Chip className='endpoint-option-card__method' variant='primary'>
+          {endpoint.method.toUpperCase()}
+        </Chip>
+        <span className={`server-endpoint-nav__state server-endpoint-nav__state--${updateState}`}>
+          {updateState === 'loading'
+            ? '更新中'
+            : updateState === 'success'
+              ? '已更新'
+              : updateState === 'error'
+                ? '失败'
+                : tuned
+                  ? '已调优'
+                  : '默认'}
+        </span>
+      </div>
+      <strong className='server-endpoint-nav__path'>{endpoint.path}</strong>
+      <span className='server-endpoint-nav__desc'>
+        {endpoint.description || endpoint.summary || endpoint.operationId || '暂无描述'}
+      </span>
+    </button>
+  );
+});
 
 function collectSchemaHints(
   schema?: Record<string, unknown>

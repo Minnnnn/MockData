@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Accordion, Button, Card, Chip, Input, Tabs, TextArea } from '@heroui/react';
+import { Accordion, Alert, Button, Card, Chip, Input, Spinner, Tabs, TextArea } from '@heroui/react';
 import { TuneAssistantDialog } from '@/components/tune-assistant-dialog';
 import {
   applyPersistedTunedMocks,
   buildWorkspaceId,
+  deletePersistedTunedMocks,
   listPersistedTunedMocks,
-  savePersistedTunedMock,
+  savePersistedTunedMock
 } from '@/lib/tuned-mock-db';
 import { EndpointDefinition, EndpointMock, MockStrategyConfig, ServerRouteConfig } from '@/lib/types';
 
@@ -56,11 +57,15 @@ export default function WorkspacePage() {
 
   const [strategy, setStrategy] = useState<MockStrategyConfig>(DEFAULT_STRATEGY);
   const [mocks, setMocks] = useState<Record<string, EndpointMock>>({});
+  const [mockDrafts, setMockDrafts] = useState<Record<string, string>>({});
+  const [mockDraftErrors, setMockDraftErrors] = useState<Record<string, string>>({});
   const [activeMockEndpointId, setActiveMockEndpointId] = useState('');
   const [tunePrompt, setTunePrompt] = useState('让返回数据更贴近真实业务场景');
   const [tuneTargetIds, setTuneTargetIds] = useState<string[]>([]);
   const [tunedEndpointIds, setTunedEndpointIds] = useState<string[]>([]);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [endpointUpdateState, setEndpointUpdateState] = useState<Record<string, 'idle' | 'loading' | 'success' | 'error'>>({});
 
   const [serverRunning, setServerRunning] = useState(false);
 
@@ -154,6 +159,15 @@ export default function WorkspacePage() {
     setTuneTargetIds((prev) => prev.filter((id) => selectedEndpoints.some((item) => item.id === id)));
   }, [selectedEndpoints, activeMockEndpointId]);
 
+  useEffect(() => {
+    const nextDrafts: Record<string, string> = {};
+    for (const [endpointId, endpointMock] of Object.entries(mocks)) {
+      nextDrafts[endpointId] = JSON.stringify(endpointMock.items ?? [], null, 2);
+    }
+    setMockDrafts(nextDrafts);
+    setMockDraftErrors({});
+  }, [mocks]);
+
   async function callWorkflow<T>(payload: Record<string, unknown>): Promise<T> {
     const res = await fetch('/api/workflow', {
       method: 'POST',
@@ -198,11 +212,15 @@ export default function WorkspacePage() {
       setApiTs('');
       setStrategy(DEFAULT_STRATEGY);
       setMocks({});
+      setMockDrafts({});
+      setMockDraftErrors({});
       setActiveMockEndpointId('');
       setTunePrompt('让返回数据更贴近真实业务场景');
       setTuneTargetIds([]);
       setTunedEndpointIds([]);
       setAssistantOpen(false);
+      setActionMessage(null);
+      setEndpointUpdateState({});
       setServerRunning(false);
 
       router.push('/');
@@ -276,6 +294,10 @@ export default function WorkspacePage() {
   async function refreshMockData() {
     setLoading(true);
     try {
+      await deletePersistedTunedMocks(
+        workspaceId,
+        selectedEndpoints.map((endpoint) => endpoint.id)
+      );
       const data = await callWorkflow<{ mocks: Record<string, EndpointMock> }>({
         action: 'generateMock',
         openapiText,
@@ -286,8 +308,23 @@ export default function WorkspacePage() {
       setMocks(nextMocks);
       await startServiceWithMocks(nextMocks, { preferPersisted: false });
       await refreshPersistedTunedState();
+      setEndpointUpdateState((prev) => {
+        const next = { ...prev };
+        for (const endpoint of selectedEndpoints) {
+          next[endpoint.id] = 'success';
+        }
+        return next;
+      });
+      setActionMessage({
+        type: 'success',
+        text: `刷新成功，已重生成并热更新 ${selectedEndpoints.length} 个接口的 Mock 数据。`
+      });
     } catch (e) {
       console.error(e);
+      setActionMessage({
+        type: 'error',
+        text: `刷新失败：${(e as Error).message}`
+      });
     } finally {
       setLoading(false);
     }
@@ -315,7 +352,7 @@ export default function WorkspacePage() {
           workspaceId,
           endpointId,
           items: normalizedItems,
-          prompt: effectivePrompt,
+          prompt: effectivePrompt
         });
 
         nextState = {
@@ -350,13 +387,13 @@ export default function WorkspacePage() {
     sourceMocks: Record<string, EndpointMock>,
     options: { preferPersisted?: boolean } = {}
   ) {
-    const resolvedMocks = options.preferPersisted === false ? sourceMocks : await applyPersistedTunedMocks(workspaceId, sourceMocks);
+    const resolvedMocks =
+      options.preferPersisted === false ? sourceMocks : await applyPersistedTunedMocks(workspaceId, sourceMocks);
     setMocks(resolvedMocks);
 
     const routes: ServerRouteConfig[] = selectedEndpoints.map((endpoint) => {
       const endpointMock = resolvedMocks[endpoint.id];
-      const payload =
-        endpointMock?.items?.length === 1 ? endpointMock.items[0] : (endpointMock?.items ?? { ok: true });
+      const payload = endpointMock?.items?.length === 1 ? endpointMock.items[0] : (endpointMock?.items ?? { ok: true });
       return {
         endpointId: endpoint.id,
         method: endpoint.method.toUpperCase(),
@@ -403,7 +440,9 @@ export default function WorkspacePage() {
   }
 
   function toggleTuneTarget(endpointId: string) {
-    setTuneTargetIds((prev) => (prev.includes(endpointId) ? prev.filter((id) => id !== endpointId) : [...prev, endpointId]));
+    setTuneTargetIds((prev) =>
+      prev.includes(endpointId) ? prev.filter((id) => id !== endpointId) : [...prev, endpointId]
+    );
   }
 
   async function tuneByPrompt(prompt: string, targetIds: string[]) {
@@ -424,12 +463,64 @@ export default function WorkspacePage() {
   async function pushRuntimeToServer(endpointId: string) {
     const runtime = mocks[endpointId]?.runtime;
     if (!runtime) return;
-    await fetch('/api/mock-server', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'updateRoute', endpointId, status: runtime.status, delayMs: runtime.delayMs })
-    });
-    await refreshServerState();
+    setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'loading' }));
+    const draft = mockDrafts[endpointId]?.trim();
+    if (!draft) {
+      setMockDraftErrors((prev) => ({ ...prev, [endpointId]: '请输入合法的 JSON 数据。' }));
+      setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'error' }));
+      return;
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(draft);
+    } catch {
+      setMockDraftErrors((prev) => ({ ...prev, [endpointId]: 'JSON 格式错误，请先修正后再热更新。' }));
+      setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'error' }));
+      setActionMessage({
+        type: 'error',
+        text: `接口 ${endpointId} 热更新失败：JSON 格式错误。`
+      });
+      return;
+    }
+
+    const nextItems = Array.isArray(parsed) ? parsed : [parsed];
+    const nextMocks = {
+      ...mocks,
+      [endpointId]: {
+        ...(mocks[endpointId] ?? {
+          endpointId,
+          runtime: { status: 200, delayMs: 0 }
+        }),
+        items: nextItems
+      }
+    };
+
+    setMockDraftErrors((prev) => ({ ...prev, [endpointId]: '' }));
+    try {
+      setMocks(nextMocks);
+      await startServiceWithMocks(nextMocks, { preferPersisted: false });
+      await savePersistedTunedMock({
+        workspaceId,
+        endpointId,
+        items: nextItems,
+        prompt: 'manual-edit'
+      });
+      await refreshPersistedTunedState();
+      await refreshServerState();
+      setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'success' }));
+      setActionMessage({
+        type: 'success',
+        text: `接口 ${endpointId} 热更新成功，接口返回与 IndexedDB 已同步更新。`
+      });
+    } catch (e) {
+      console.error(e);
+      setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'error' }));
+      setActionMessage({
+        type: 'error',
+        text: `接口 ${endpointId} 热更新失败：${(e as Error).message}`
+      });
+    }
   }
 
   function updateRuntime(endpointId: string, key: 'status' | 'delayMs', value: number) {
@@ -447,6 +538,25 @@ export default function WorkspacePage() {
         }
       };
     });
+  }
+
+  function updateMockDraft(endpointId: string, value: string) {
+    setMockDrafts((prev) => ({
+      ...prev,
+      [endpointId]: value
+    }));
+
+    setMockDraftErrors((prev) => {
+      if (!prev[endpointId]) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [endpointId]: ''
+      };
+    });
+    setActionMessage(null);
   }
 
   function renderRequestParamsHint(schema?: Record<string, unknown>) {
@@ -558,6 +668,13 @@ export default function WorkspacePage() {
             </Card.Header>
 
             <Card.Content>
+              {actionMessage ? (
+                <p
+                  className={`status-text ${actionMessage.type === 'error' ? 'status-text--error' : 'status-text--notice'}`}
+                >
+                  {actionMessage.text}
+                </p>
+              ) : null}
               <div className='mock-stepper'>
                 {[1, 2, 3].map((item) => (
                   <Button
@@ -680,11 +797,6 @@ export default function WorkspacePage() {
                         仅对分页接口或 `data` 为数组的接口生效，其他接口固定生成 1 条。
                       </small>
                     </label>
-                    <div className='native-field'>
-                      AI 调优
-                      <Input value='默认开启' readOnly />
-                      <small className='native-field__hint'>所有已生成的接口都支持 AI 对话调优。</small>
-                    </div>
                   </div>
                   <div className='panel-actions'>
                     <Button variant='outline' onPress={() => setMockStep(1)}>
@@ -707,10 +819,18 @@ export default function WorkspacePage() {
                     <Button variant='outline' onPress={() => setMockStep(2)}>
                       上一步
                     </Button>
-                    <Button variant='outline' onPress={refreshMockData} isDisabled={loading || selectedEndpoints.length === 0}>
+                    <Button
+                      variant='outline'
+                      onPress={refreshMockData}
+                      isDisabled={loading || selectedEndpoints.length === 0}
+                    >
                       刷新 Mock 数据
                     </Button>
-                    <Button variant='outline' onPress={startService} isDisabled={loading || selectedEndpoints.length === 0}>
+                    <Button
+                      variant='outline'
+                      onPress={startService}
+                      isDisabled={loading || selectedEndpoints.length === 0}
+                    >
                       重新启动服务
                     </Button>
                     <span className='status-pill'>{serverRunning ? '服务运行中' : '服务未启动'}</span>
@@ -719,14 +839,24 @@ export default function WorkspacePage() {
                   <div className='server-grid'>
                     {selectedEndpoints.map((endpoint) => {
                       const runtime = mocks[endpoint.id]?.runtime ?? { status: 200, delayMs: 0 };
-                      const previewJson = JSON.stringify(mocks[endpoint.id]?.items ?? [], null, 2);
+                      const previewJson =
+                        mockDrafts[endpoint.id] ?? JSON.stringify(mocks[endpoint.id]?.items ?? [], null, 2);
                       const tuned = tunedEndpointIds.includes(endpoint.id);
+                      const draftError = mockDraftErrors[endpoint.id];
+                      const updateState = endpointUpdateState[endpoint.id] ?? 'idle';
                       return (
                         <Card key={endpoint.id} variant='default' className='server-card'>
                           <Card.Header>
-                            <Card.Title>
-                              {endpoint.method.toUpperCase()} {endpoint.path}
-                            </Card.Title>
+                            <Alert status={updateState === 'success' ? 'success' : updateState === 'error' ? 'danger' : undefined}>
+                              <Alert.Indicator>
+                                {updateState === 'loading' ? <Spinner size='sm' /> : null}
+                              </Alert.Indicator>
+                              <Alert.Content>
+                                <Card.Title>
+                                  {endpoint.method.toUpperCase()} {endpoint.path}
+                                </Card.Title>
+                              </Alert.Content>
+                            </Alert>
                             {tuned ? <Card.Description>已优先使用 AI 调优数据</Card.Description> : null}
                           </Card.Header>
                           <Card.Content>
@@ -770,11 +900,21 @@ export default function WorkspacePage() {
                                 <div className='mock-preview-panel'>
                                   <div className='mock-preview-panel__header'>
                                     <h3>Mock 数据预览</h3>
-                                    <Button variant='outline' onPress={() => tuneMock([endpoint.id])} isDisabled={loading}>
+                                    <Button
+                                      variant='outline'
+                                      onPress={() => tuneMock([endpoint.id])}
+                                      isDisabled={loading}
+                                    >
                                       AI 调优
                                     </Button>
                                   </div>
-                                  <TextArea value={previewJson} readOnly rows={18} className='mono-area mono-area--preview' />
+                                  <TextArea
+                                    value={previewJson}
+                                    onChange={(event) => updateMockDraft(endpoint.id, event.target.value)}
+                                    rows={18}
+                                    className='mono-area mono-area--preview'
+                                  />
+                                  {draftError ? <p className='status-text status-text--error'>{draftError}</p> : null}
                                 </div>
                               </div>
                               <div className='server-card__tips'>

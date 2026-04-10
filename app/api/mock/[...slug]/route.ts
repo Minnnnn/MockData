@@ -61,9 +61,9 @@ function buildMockEnvelope(
   },
   requestParams: Record<string, unknown>
 ) {
-  const isSuccessStatus = route.status >= 200 && route.status < 300;
+  const isDefaultSuccessStatus = route.status === 200;
 
-  if (!isSuccessStatus && route.status === 403) {
+  if (!isDefaultSuccessStatus && route.status === 403) {
     return {
       rc: 1,
       msg: '请登录',
@@ -71,7 +71,7 @@ function buildMockEnvelope(
     };
   }
 
-  if (!isSuccessStatus) {
+  if (!isDefaultSuccessStatus) {
     return {
       rc: 1,
       msg: `${route.description || route.path || '接口'}错误`,

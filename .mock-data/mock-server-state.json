@@ -9,28 +9,28 @@
       "description": "商品审核分页查询",
       "payload": {
         "msg": "desparatus votum",
-        "rc": 320,
+        "rc": 0,
         "data": {
           "items": [
             {
-              "id": "adinventitias spargo",
-              "auditState": 210,
-              "shopName": "audeo truculenter",
-              "shopCode": "tenuis vix",
-              "productCode": "vehemens quia",
-              "imgSrc": "qui sumptus",
-              "productName": "caterva via",
-              "productType": "benigne defluo",
-              "retailPrice": 218.24,
-              "costPrice": 242.54,
-              "purchaseTax": 614.22,
-              "auditTime": "2026-04-08 23:01:09"
+              "id": "comitatus adinventitias",
+              "auditState": 670,
+              "shopName": "bellum audeo",
+              "shopCode": "truculenter tenuis",
+              "productCode": "vix vehemens",
+              "imgSrc": "quia qui",
+              "productName": "sumptus caterva",
+              "productType": "via benigne",
+              "retailPrice": 457.15,
+              "costPrice": 218.24,
+              "purchaseTax": 242.54,
+              "auditTime": "2026-04-09 19:03:51"
             }
           ],
-          "total": 986,
-          "hasMore": true
+          "total": 772,
+          "hasMore": false
         },
-        "trace": "totidem vulgivagus",
+        "trace": "curia totidem",
         "success": false
       },
       "totalCount": 1,
@@ -44,11 +44,11 @@
       "description": "商品审核单商品操作",
       "payload": {
         "msg": "benigne amiculum",
-        "rc": 519,
+        "rc": 0,
         "data": {
-          "value": "vado"
+          "value": "earum"
         },
-        "trace": "caelestis cohibeo",
+        "trace": "vado caelestis",
         "success": true
       },
       "totalCount": 1,
@@ -62,9 +62,9 @@
       "description": "商品审核批量导入",
       "payload": {
         "msg": "tempus subnecto",
-        "rc": 934,
-        "data": "cerno cilicium",
-        "trace": "corona quis",
+        "rc": 0,
+        "data": "victoria cerno",
+        "trace": "cilicium corona",
         "success": false
       },
       "totalCount": 1,
@@ -78,11 +78,11 @@
       "description": "商品审核批量提审",
       "payload": {
         "msg": "vigilo quam",
-        "rc": 956,
+        "rc": 0,
         "data": {
-          "value": "capto"
+          "value": "vis"
         },
-        "trace": "socius confugo",
+        "trace": "capto socius",
         "success": true
       },
       "totalCount": 1,
@@ -96,28 +96,28 @@
       "description": "商品列表分页查询",
       "payload": {
         "msg": "apto conforto",
-        "rc": 492,
+        "rc": 0,
         "data": {
           "items": [
             {
-              "id": "antiquus vetus",
-              "shopName": "aperio uterque",
-              "shopCode": "volaticus creo",
-              "productCode": "molestiae vilis",
-              "imgUrl": "provident vorago",
-              "productName": "numquam sollicito",
-              "productType": "villa stillicidium",
-              "retailPrice": 146.62,
-              "costPrice": 985.08,
-              "grossMargin": 845.22,
-              "purchaseTax": 79.34,
-              "stockNum": 88
+              "id": "deprecator antiquus",
+              "shopName": "vetus aperio",
+              "shopCode": "uterque volaticus",
+              "productCode": "creo molestiae",
+              "imgUrl": "vilis provident",
+              "productName": "vorago numquam",
+              "productType": "sollicito villa",
+              "retailPrice": 685.01,
+              "costPrice": 146.62,
+              "grossMargin": 985.08,
+              "purchaseTax": 845.22,
+              "stockNum": 79
             }
           ],
-          "total": 661,
+          "total": 88,
           "hasMore": false
         },
-        "trace": "theca utilis",
+        "trace": "sumptus theca",
         "success": false
       },
       "totalCount": 1,
@@ -131,11 +131,11 @@
       "description": "商品单商品操作",
       "payload": {
         "msg": "arx taedium",
-        "rc": 7,
+        "rc": 0,
         "data": {
-          "value": "suppono"
+          "value": "absconditus"
         },
-        "trace": "degero ambitus",
+        "trace": "suppono degero",
         "success": true
       },
       "totalCount": 1,
@@ -149,47 +149,47 @@
       "description": "商品审核详情查询",
       "payload": {
         "msg": "benigne eum",
-        "rc": 887,
+        "rc": 0,
         "data": {
-          "id": "desolo abutor",
+          "id": "valde desolo",
           "refusalReasons": [
             {
-              "time": "2026-04-08 21:30:22",
-              "reason": "saepe torrens"
+              "time": "2026-04-10 09:40:05",
+              "reason": "truculenter saepe"
             }
           ],
-          "shopName": "tamen supellex",
-          "shopCode": "decretum ager",
-          "productCode": "clamo quod",
-          "spellCode": "deorsum spes",
-          "barCode": "baiulus patruus",
-          "outProductCode": "pauper certe",
-          "productName": "vomer coniuratio",
-          "validityPeriod": "crinis minima",
-          "shortName": "tribuo atque",
-          "stockNum": 898,
-          "productSpec": "congregatio damnatio",
-          "brandId": "surculus videlicet",
-          "brandName": "crur concedo",
-          "firstProductTypeId": "valde crinis",
-          "firstProductType": "ago carmen",
-          "secondProductTypeId": "sursum ambulo",
-          "secondProductType": "casso artificiose",
-          "thirdProductTypeId": "utpote porro",
-          "thirdProductType": "deputo conqueror",
-          "manuFacturer": "adiuvo ars",
-          "productLicense": "utique viriliter",
-          "productUnit": "casus subseco",
-          "thirdUrl": "canto catena",
-          "costPrice": 831.1,
-          "retailPrice": 994.09,
-          "taxCode": "sol vergo",
-          "purchaseTax": 524.1,
+          "shopName": "torrens tamen",
+          "shopCode": "supellex decretum",
+          "productCode": "ager clamo",
+          "spellCode": "quod deorsum",
+          "barCode": "spes baiulus",
+          "outProductCode": "patruus pauper",
+          "productName": "certe vomer",
+          "validityPeriod": "coniuratio crinis",
+          "shortName": "minima tribuo",
+          "stockNum": 176,
+          "productSpec": "velit congregatio",
+          "brandId": "damnatio surculus",
+          "brandName": "videlicet crur",
+          "firstProductTypeId": "concedo valde",
+          "firstProductType": "crinis ago",
+          "secondProductTypeId": "carmen sursum",
+          "secondProductType": "ambulo casso",
+          "thirdProductTypeId": "artificiose utpote",
+          "thirdProductType": "porro deputo",
+          "manuFacturer": "conqueror adiuvo",
+          "productLicense": "ars utique",
+          "productUnit": "viriliter casus",
+          "thirdUrl": "subseco canto",
+          "costPrice": 254.97,
+          "retailPrice": 831.1,
+          "taxCode": "vulgus sol",
+          "purchaseTax": 914.1,
           "imgUrls": [],
-          "productDetail": "annus caste",
-          "auditState": 652
+          "productDetail": "error annus",
+          "auditState": 253
         },
-        "trace": "casso velit",
+        "trace": "solio casso",
         "success": false
       },
       "totalCount": 1,
@@ -203,41 +203,41 @@
       "description": "商品详情查询",
       "payload": {
         "msg": "toties aeternus",
-        "rc": 900,
+        "rc": 0,
         "data": {
-          "id": "decor coma",
-          "shopName": "dedecor concedo",
-          "shopCode": "perferendis adfero",
-          "productCode": "quasi nisi",
-          "spellCode": "audacia sit",
-          "barCode": "aro voro",
-          "outProductCode": "suffoco balbus",
-          "productName": "ademptio admiratio",
-          "validityPeriod": "decipio stips",
-          "shortName": "adeo bardus",
-          "stockNum": 448,
-          "productSpec": "volva tenax",
-          "brandId": "esse conculco",
-          "brandName": "sub nam",
-          "firstProductTypeId": "decimus adipisci",
-          "firstProductType": "tersus attollo",
-          "secondProductTypeId": "culpo depono",
-          "secondProductType": "volutabrum agnitio",
-          "thirdProductTypeId": "non cariosus",
-          "thirdProductType": "fugiat sursum",
-          "manuFacturer": "argumentum ventosus",
-          "productLicense": "adfectus sed",
-          "productUnit": "tergo inventore",
-          "thirdUrl": "claudeo quae",
-          "costPrice": 208.09,
-          "retailPrice": 829.74,
-          "taxCode": "atqui tyrannus",
-          "purchaseTax": 589.6,
+          "id": "velut decor",
+          "shopName": "coma dedecor",
+          "shopCode": "concedo perferendis",
+          "productCode": "adfero quasi",
+          "spellCode": "nisi audacia",
+          "barCode": "sit aro",
+          "outProductCode": "voro suffoco",
+          "productName": "balbus ademptio",
+          "validityPeriod": "admiratio decipio",
+          "shortName": "stips adeo",
+          "stockNum": 205,
+          "productSpec": "dedecor volva",
+          "brandId": "tenax esse",
+          "brandName": "conculco sub",
+          "firstProductTypeId": "nam decimus",
+          "firstProductType": "adipisci tersus",
+          "secondProductTypeId": "attollo culpo",
+          "secondProductType": "depono volutabrum",
+          "thirdProductTypeId": "agnitio non",
+          "thirdProductType": "cariosus fugiat",
+          "manuFacturer": "sursum argumentum",
+          "productLicense": "ventosus adfectus",
+          "productUnit": "sed tergo",
+          "thirdUrl": "inventore claudeo",
+          "costPrice": 618.9,
+          "retailPrice": 208.09,
+          "taxCode": "tricesimus atqui",
+          "purchaseTax": 846.65,
           "imgUrls": [],
-          "productDetail": "volva vox"
+          "productDetail": "odit volva"
         },
-        "trace": "debeo statim",
-        "success": true
+        "trace": "vox debeo",
+        "success": false
       },
       "totalCount": 1,
       "status": 200,
@@ -245,6 +245,94 @@
     }
   ],
   "logs": [
+    {
+      "id": "1775785062093_zb47u7",
+      "time": "2026-04-10T01:37:42.093Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775785054518_21pets",
+      "time": "2026-04-10T01:37:34.518Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775785045641_zewafy",
+      "time": "2026-04-10T01:37:25.641Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775784586783_wr3i9c",
+      "time": "2026-04-10T01:29:46.783Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775784565343_7lpl3j",
+      "time": "2026-04-10T01:29:25.343Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775784564001_fakkkb",
+      "time": "2026-04-10T01:29:24.001Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775784555731_bq7kw8",
+      "time": "2026-04-10T01:29:15.731Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775784536883_uv2cy1",
+      "time": "2026-04-10T01:28:56.883Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775784527140_7zkxg5",
+      "time": "2026-04-10T01:28:47.140Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775784519723_qd252i",
+      "time": "2026-04-10T01:28:39.723Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775784493005_wxdms6",
+      "time": "2026-04-10T01:28:13.005Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
     {
       "id": "1775716907679_y8sf1y",
       "time": "2026-04-09T06:41:47.679Z",

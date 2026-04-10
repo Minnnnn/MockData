@@ -56,6 +56,21 @@ export async function getPersistedTunedMock(
   return record ?? null;
 }
 
+export async function deletePersistedTunedMock(workspaceId: string, endpointId: string): Promise<void> {
+  const db = await openDatabase();
+  await runRequest(db.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME).delete(getRecordId(workspaceId, endpointId)));
+}
+
+export async function deletePersistedTunedMocks(workspaceId: string, endpointIds: string[]): Promise<void> {
+  if (endpointIds.length === 0) {
+    return;
+  }
+
+  const db = await openDatabase();
+  const store = db.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME);
+  await Promise.all(endpointIds.map((endpointId) => runRequest(store.delete(getRecordId(workspaceId, endpointId)))));
+}
+
 export async function applyPersistedTunedMocks(
   workspaceId: string,
   mocks: Record<string, EndpointMock>,

@@ -414,6 +414,11 @@ function mockFromSchema(
       const include = strategy.fieldCoverage === 'all' || required.has(key);
       if (!include) continue;
 
+      if (isRcField(key)) {
+        out[key] = 0;
+        continue;
+      }
+
       const propSchema = props[key];
       const fromRule = byRule(strategy.fieldRules[key], key);
       out[key] = fromRule ?? mockFromSchema(propSchema, strategy, `${contextKey}.${key}`, endpoint);
@@ -553,6 +558,7 @@ function byRule(rule: string | undefined, key: string): unknown {
 
 function inferByName(key: string): unknown {
   const lower = key.toLowerCase();
+  if (isRcField(lower)) return 0;
   if (/email/.test(lower)) return faker.internet.email();
   if (/phone|mobile/.test(lower)) return faker.phone.number('1##########');
   if (/name|title|nick/.test(lower)) return faker.person.fullName();
@@ -656,5 +662,9 @@ function hashCode(input: string): number {
 
 function isImageFieldKey(key: string): boolean {
   return /(?:^|[.\[_])(img|image|avatar|cover|pic|photo)/i.test(key);
+}
+
+function isRcField(key: string): boolean {
+  return /(^|[._\[])(rc)(\]|$)/i.test(key);
 }
 

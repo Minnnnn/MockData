@@ -10,8 +10,27 @@ const DEFAULT_STRATEGY: MockStrategyConfig = {
   aiMode: true,
   anomalyRate: 0,
   fieldCoverage: 'all',
-  fieldRules: {},
+  fieldRules: {}
 };
+
+const TUNE_SYSTEM_PROMPT = `你是一名资深 Mock 数据调优专家和数据一致性审校专家。
+
+你的唯一任务是：基于用户要求，对当前 JSON 做最小必要修改。
+
+必须严格遵守以下规则：
+1. 你只能返回合法 JSON。
+2. 不要输出解释、备注、markdown、代码围栏或任何额外文本。
+3. 保持原始 JSON 的整体结构不变。
+4. 保持未被用户明确要求修改的字段完全不变。
+5. 当用户只要求调整某个字段、某几个字段、某类字段时，只允许修改这些字段，其他字段的 key、value、顺序、层级都尽量保持原样。
+6. 不要擅自补充新字段、删除字段、重命名字段。
+7. 不要改变字段类型；字符串保持字符串，数字保持数字，布尔值保持布尔值，数组保持数组，对象保持对象。
+8. 如果用户要求与现有 JSON 结构冲突，也只能在最小范围内调整，并优先保留原结构。
+9. 如果用户的要求不明确，优先做最保守的修改，不要扩大修改范围。
+10. 如果用户要求修改某个字段内容，请只更新该字段的值，不要联动修改其他字段，除非用户明确要求。
+11. 输出结果必须可以直接被 JSON.parse 解析。
+12. 如果有id字段保证id字段唯一，包括但不限于id, productId，等等任意包含id的字段。
+`;
 
 export async function POST(request: Request) {
   try {
@@ -49,14 +68,14 @@ export async function POST(request: Request) {
       return NextResponse.json({
         endpoints: selected,
         typesTs: generated.typesTs,
-        apiTs: generated.apiTs,
+        apiTs: generated.apiTs
       });
     }
 
     if (action === 'generateMock') {
       const strategy: MockStrategyConfig = {
         ...DEFAULT_STRATEGY,
-        ...(body.strategy as Partial<MockStrategyConfig>),
+        ...(body.strategy as Partial<MockStrategyConfig>)
       };
       strategy.count = Math.max(1, Number(strategy.count || 1));
       strategy.anomalyRate = Math.max(0, Math.min(30, Number(strategy.anomalyRate || 0)));
@@ -64,7 +83,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         endpoints: selected,
-        mocks: generateEndpointMocks(selected, strategy),
+        mocks: generateEndpointMocks(selected, strategy)
       });
     }
 
@@ -74,14 +93,17 @@ export async function POST(request: Request) {
   }
 }
 
-async function tuneMockJsonByPrompt(jsonText: string, prompt: string): Promise<{ output: string; changedKeys: string[] }> {
+async function tuneMockJsonByPrompt(
+  jsonText: string,
+  prompt: string
+): Promise<{ output: string; changedKeys: string[] }> {
   if (!process.env.DEEPSEEK_API_KEY) {
     throw new Error('缺少 DEEPSEEK_API_KEY，无法执行 AI 调优。');
   }
 
   const openai = new OpenAI({
     baseURL: 'https://api.deepseek.com',
-    apiKey: process.env.DEEPSEEK_API_KEY,
+    apiKey: process.env.DEEPSEEK_API_KEY
   });
 
   const completion = await openai.chat.completions.create({
@@ -89,14 +111,13 @@ async function tuneMockJsonByPrompt(jsonText: string, prompt: string): Promise<{
     messages: [
       {
         role: 'system',
-        content:
-          '你是一个严格输出 JSON 的 Mock 数据调优助手。你只能返回合法 JSON，不要输出解释、markdown、代码围栏或额外文本。保持原有 JSON 的整体结构与字段类型，结合用户要求优化内容真实性。',
+        content: TUNE_SYSTEM_PROMPT
       },
       {
         role: 'user',
-        content: `用户调优要求：${prompt}\n\n当前 JSON：\n${jsonText}`,
-      },
-    ],
+        content: buildTuneUserPrompt(prompt, jsonText)
+      }
+    ]
   });
 
   const content = completion.choices[0]?.message?.content;
@@ -106,7 +127,7 @@ async function tuneMockJsonByPrompt(jsonText: string, prompt: string): Promise<{
 
   return {
     output: JSON.stringify(after, null, 2),
-    changedKeys: collectChangedKeys(before, after),
+    changedKeys: collectChangedKeys(before, after)
   };
 }
 
@@ -121,6 +142,22 @@ function extractJsonText(input: string | null | undefined): string {
   }
 
   return input.trim();
+}
+
+function buildTuneUserPrompt(prompt: string, jsonText: string): string {
+  return `请根据下面的要求调优当前 JSON。
+
+用户要求：
+${prompt}
+
+执行要求：
+- 只修改用户明确要求调整的字段
+- 其他未提及字段必须保持不变
+- 保持原有 JSON 结构与字段类型不变
+- 返回结果只能是合法 JSON
+
+当前 JSON：
+${jsonText}`;
 }
 
 function collectChangedKeys(before: unknown, after: unknown, path: string[] = []): string[] {

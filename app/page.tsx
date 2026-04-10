@@ -130,7 +130,13 @@ export default function Home() {
   function toggleGroup(groupIds: string[], checked: boolean) {
     setSelectedIds((prev) => {
       const set = new Set(prev);
-      for (const id of groupIds) checked ? set.add(id) : set.delete(id);
+      for (const id of groupIds) {
+        if (checked) {
+          set.add(id);
+        } else {
+          set.delete(id);
+        }
+      }
       return Array.from(set);
     });
   }

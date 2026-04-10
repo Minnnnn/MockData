@@ -47,7 +47,7 @@ function getResolvedPath(request: Request, slug: string[] | undefined): string {
 
 type Params = { slug?: string[] };
 
-const COLLECTION_KEYS = ['items', 'list', 'records', 'rows', 'dataList', 'resultList'] as const;
+const COLLECTION_KEYS = ['items', 'item', 'list', 'records', 'rows', 'dataList', 'resultList'] as const;
 const PAGE_KEYS = ['page', 'pageNum', 'pageNo', 'current'] as const;
 const PAGE_SIZE_KEYS = ['pageSize', 'pagesize', 'limit', 'size'] as const;
 
@@ -95,23 +95,19 @@ function buildSuccessData(
   const normalizedPayload = unwrapPayload(payload);
   const paging = getPaging(requestParams, normalizedPayload, totalHint);
 
-  if (!paging) {
-    if (Array.isArray(normalizedPayload) && normalizedPayload.length === 1) {
-      return unwrapPayload(normalizedPayload[0]);
-    }
+  // For data arrays, always return the full configured array.
+  // page/pageSize only affect paginated object shapes like:
+  // { data: { items|item: [], total, hasMore } }
+  if (Array.isArray(normalizedPayload)) {
     return normalizedPayload;
   }
 
-  const total = Math.max(1, Number(totalHint ?? inferTotal(normalizedPayload) ?? paging.pageSize));
-
-  if (Array.isArray(normalizedPayload)) {
-    const first = normalizedPayload[0];
-    if (isRecord(first) && hasCollectionShape(first)) {
-      return applyPaginationToObject(first, total, paging);
-    }
-
-    return paginateArray(normalizedPayload, total, paging);
+  if (!paging) {
+    return normalizedPayload;
   }
+
+  const inferredTotal = inferTotal(normalizedPayload);
+  const total = Math.max(1, Number(Math.max(totalHint ?? 0, inferredTotal ?? 0)));
 
   if (isRecord(normalizedPayload)) {
     return applyPaginationToObject(normalizedPayload, total, paging);
@@ -163,17 +159,16 @@ function getPaging(
     PAGE_KEYS.some((key) => requestParams[key] !== undefined) ||
     PAGE_SIZE_KEYS.some((key) => requestParams[key] !== undefined);
 
-  const payloadLooksPaged = Array.isArray(payload)
-    ? Boolean(payload[0] && isRecord(payload[0]) && hasCollectionShape(payload[0]))
-    : isRecord(payload) && hasCollectionShape(payload);
-
-  if (!hasPageParam && !payloadLooksPaged) {
+  // Only paginate when the request explicitly provides paging params.
+  // Otherwise return the configured payload exactly as edited in the workspace.
+  if (!hasPageParam) {
     return null;
   }
 
   const page = Math.max(1, readNumber(requestParams, PAGE_KEYS, 1));
   const pageSize = Math.max(1, readNumber(requestParams, PAGE_SIZE_KEYS, 10));
-  const total = Math.max(1, Number(totalHint ?? inferTotal(payload) ?? pageSize));
+  const inferredTotal = inferTotal(payload);
+  const total = Math.max(1, Number(Math.max(totalHint ?? 0, inferredTotal ?? 0)));
 
   return { page, pageSize, total };
 }
@@ -342,14 +337,6 @@ function inferTotal(payload: unknown): number | undefined {
   }
 
   return undefined;
-}
-
-function hasCollectionShape(value: Record<string, unknown>): boolean {
-  if (COLLECTION_KEYS.some((key) => Array.isArray(value[key]))) {
-    return true;
-  }
-
-  return Object.values(value).some((item) => isRecord(item) && hasCollectionShape(item));
 }
 
 function readNumber(record: Record<string, unknown>, keys: readonly string[], fallback: number) {

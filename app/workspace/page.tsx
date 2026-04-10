@@ -64,8 +64,12 @@ export default function WorkspacePage() {
   const [tuneTargetIds, setTuneTargetIds] = useState<string[]>([]);
   const [tunedEndpointIds, setTunedEndpointIds] = useState<string[]>([]);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [inlineTuneOpen, setInlineTuneOpen] = useState<Record<string, boolean>>({});
+  const [inlineTunePrompts, setInlineTunePrompts] = useState<Record<string, string>>({});
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [endpointUpdateState, setEndpointUpdateState] = useState<Record<string, 'idle' | 'loading' | 'success' | 'error'>>({});
+  const [endpointUpdateState, setEndpointUpdateState] = useState<
+    Record<string, 'idle' | 'loading' | 'success' | 'error'>
+  >({});
 
   const [serverRunning, setServerRunning] = useState(false);
 
@@ -162,11 +166,23 @@ export default function WorkspacePage() {
   useEffect(() => {
     const nextDrafts: Record<string, string> = {};
     for (const [endpointId, endpointMock] of Object.entries(mocks)) {
-      nextDrafts[endpointId] = JSON.stringify(endpointMock.items ?? [], null, 2);
+      nextDrafts[endpointId] = JSON.stringify(getEditableMockPayload(endpointMock), null, 2);
     }
     setMockDrafts(nextDrafts);
     setMockDraftErrors({});
   }, [mocks]);
+
+  useEffect(() => {
+    setInlineTunePrompts((prev) => {
+      const next = { ...prev };
+      for (const endpoint of selectedEndpoints) {
+        if (!next[endpoint.id]) {
+          next[endpoint.id] = '';
+        }
+      }
+      return next;
+    });
+  }, [selectedEndpoints]);
 
   async function callWorkflow<T>(payload: Record<string, unknown>): Promise<T> {
     const res = await fetch('/api/workflow', {
@@ -219,6 +235,8 @@ export default function WorkspacePage() {
       setTuneTargetIds([]);
       setTunedEndpointIds([]);
       setAssistantOpen(false);
+      setInlineTuneOpen({});
+      setInlineTunePrompts({});
       setActionMessage(null);
       setEndpointUpdateState({});
       setServerRunning(false);
@@ -340,7 +358,7 @@ export default function WorkspacePage() {
       const effectivePrompt = promptOverride ?? tunePrompt;
 
       for (const endpointId of effectiveTargetIds) {
-        const jsonText = JSON.stringify(nextState[endpointId]?.items ?? [], null, 2);
+        const jsonText = JSON.stringify(getEditableMockPayload(nextState[endpointId]), null, 2);
         const data = await callWorkflow<{ output: string; changedKeys: string[] }>({
           action: 'tune',
           jsonText,
@@ -454,6 +472,38 @@ export default function WorkspacePage() {
     return `已按要求调优 ${targetIds.length} 个接口：\n${endpointLabels.join('\n')}\n\n最新变更字段：${changedKeys.length ? changedKeys.join(', ') : '已更新数据结构内容。'}`;
   }
 
+  async function handleInlineTune(endpointId: string) {
+    const prompt = (inlineTunePrompts[endpointId] ?? tunePrompt).trim();
+    if (!prompt) {
+      setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'error' }));
+      setActionMessage({
+        type: 'error',
+        text: '请输入本次 AI 调优要求。'
+      });
+      return;
+    }
+
+    setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'loading' }));
+    await waitForNextPaint();
+    const changedKeys = await tuneMock([endpointId], prompt);
+    if (changedKeys.length === 0) {
+      setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'error' }));
+      setActionMessage({
+        type: 'error',
+        text: `接口 ${endpointId} 调优失败或未产生有效修改。`
+      });
+      return;
+    }
+
+    setInlineTuneOpen((prev) => ({ ...prev, [endpointId]: false }));
+    setInlineTunePrompts((prev) => ({ ...prev, [endpointId]: prompt }));
+    setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'success' }));
+    setActionMessage({
+      type: 'success',
+      text: `接口 ${endpointId} AI 调优成功，已回填最新 Mock 数据。`
+    });
+  }
+
   async function refreshServerState() {
     const res = await fetch('/api/mock-server');
     const data = await res.json();
@@ -464,6 +514,7 @@ export default function WorkspacePage() {
     const runtime = mocks[endpointId]?.runtime;
     if (!runtime) return;
     setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'loading' }));
+    await waitForNextPaint();
     const draft = mockDrafts[endpointId]?.trim();
     if (!draft) {
       setMockDraftErrors((prev) => ({ ...prev, [endpointId]: '请输入合法的 JSON 数据。' }));
@@ -839,15 +890,21 @@ export default function WorkspacePage() {
                   <div className='server-grid'>
                     {selectedEndpoints.map((endpoint) => {
                       const runtime = mocks[endpoint.id]?.runtime ?? { status: 200, delayMs: 0 };
-                      const previewJson =
-                        mockDrafts[endpoint.id] ?? JSON.stringify(mocks[endpoint.id]?.items ?? [], null, 2);
+                      const previewJson = mockDrafts[endpoint.id] ?? JSON.stringify(getEditableMockPayload(mocks[endpoint.id]), null, 2);
                       const tuned = tunedEndpointIds.includes(endpoint.id);
                       const draftError = mockDraftErrors[endpoint.id];
                       const updateState = endpointUpdateState[endpoint.id] ?? 'idle';
+                      const currentInlineTuneOpen = Boolean(inlineTuneOpen[endpoint.id]);
+                      const currentInlineTunePrompt = inlineTunePrompts[endpoint.id] ?? tunePrompt;
                       return (
                         <Card key={endpoint.id} variant='default' className='server-card'>
                           <Card.Header>
-                            <Alert status={updateState === 'success' ? 'success' : updateState === 'error' ? 'danger' : undefined}>
+                            <Alert
+                              status={
+                                updateState === 'success' ? 'success' : updateState === 'error' ? 'danger' : undefined
+                              }
+                              style={{ marginBottom: '10px' }}
+                            >
                               <Alert.Indicator>
                                 {updateState === 'loading' ? <Spinner size='sm' /> : null}
                               </Alert.Indicator>
@@ -902,12 +959,54 @@ export default function WorkspacePage() {
                                     <h3>Mock 数据预览</h3>
                                     <Button
                                       variant='outline'
-                                      onPress={() => tuneMock([endpoint.id])}
+                                      onPress={() =>
+                                        setInlineTuneOpen((prev) => ({
+                                          ...prev,
+                                          [endpoint.id]: !prev[endpoint.id]
+                                        }))
+                                      }
                                       isDisabled={loading}
                                     >
                                       AI 调优
                                     </Button>
                                   </div>
+                                  {currentInlineTuneOpen ? (
+                                    <div className='inline-tune-panel'>
+                                      <TextArea
+                                        fullWidth
+                                        value={currentInlineTunePrompt}
+                                        onChange={(event) =>
+                                          setInlineTunePrompts((prev) => ({
+                                            ...prev,
+                                            [endpoint.id]: event.target.value
+                                          }))
+                                        }
+                                        rows={3}
+                                        placeholder='请输入调优要求，例如：只把 price 改成 99.9，其他字段保持不变'
+                                      />
+                                      <div className='inline-tune-panel__actions'>
+                                        <Button
+                                          variant='outline'
+                                          onPress={() =>
+                                            setInlineTuneOpen((prev) => ({
+                                              ...prev,
+                                              [endpoint.id]: false
+                                            }))
+                                          }
+                                          style={{ marginRight: '5px' }}
+                                        >
+                                          取消
+                                        </Button>
+                                        <Button
+                                          variant='primary'
+                                          onPress={() => handleInlineTune(endpoint.id)}
+                                          isDisabled={loading}
+                                        >
+                                          提交调优
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ) : null}
                                   <TextArea
                                     value={previewJson}
                                     onChange={(event) => updateMockDraft(endpoint.id, event.target.value)}
@@ -1019,6 +1118,20 @@ function getDataSchema(schema?: Record<string, unknown>): Record<string, unknown
   }
 
   return schema.properties.data;
+}
+
+function getEditableMockPayload(endpointMock?: EndpointMock): unknown {
+  if (!endpointMock?.items?.length) {
+    return [];
+  }
+
+  return endpointMock.items.length === 1 ? endpointMock.items[0] : endpointMock.items;
+}
+
+function waitForNextPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
 }
 
 function isRecord(value: unknown): value is Record<string, any> {

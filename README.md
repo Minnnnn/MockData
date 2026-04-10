@@ -13,6 +13,7 @@
 - 启动本地 Mock 服务，支持 `GET/POST/PUT/PATCH/DELETE/OPTIONS/HEAD`
 - 单接口修改状态码、延迟、返回数据，并支持热更新
 - 支持 AI 对话批量调优接口数据
+- 支持单接口内联 AI 调优输入面板
 - AI 调优结果持久化到 IndexedDB，后续优先复用
 - 支持刷新 Mock 数据时清空当前接口的 IndexedDB 历史调优缓存
 - 图片字段自动从 `FIXED_IMAGE_URL` 中随机返回
@@ -93,6 +94,7 @@ Mock 数据流程目前固定为 3 步：
 - `热更新`
 - `AI 调优`
 - 查看请求参数提示
+- 标题区域显示操作状态：默认、loading、success、danger
 
 额外支持：
 
@@ -115,6 +117,8 @@ Mock 数据流程目前固定为 3 步：
 - 支持接口选择器
 - 支持多个接口批量调优
 - 单接口也可在 Mock 数据预览区域直接调优
+- 单接口 AI 调优先点击按钮，再展开输入框填写具体要求
+- 单接口 AI 调优提交后，接口标题区域也会同步显示 loading、success、danger 状态
 
 AI 调优逻辑：
 
@@ -123,6 +127,8 @@ AI 调优逻辑：
 - 调优结果立即回填到当前接口 Mock 数据区
 - 调优结果写入 IndexedDB
 - 后续生成与服务启动时优先读取 IndexedDB 中的调优结果
+- AI 提示词限制模型只做最小必要修改
+- 当用户只要求调整某个字段时，其他字段保持不变
 
 当前 AI 接口实现位于：
 
@@ -170,6 +176,7 @@ curl http://localhost:3666/mock-api/your/path
 当前行为：
 
 - 可以直接编辑 JSON
+- 预览区展示的是接口实际返回所使用的 payload 形态
 - 点击 `热更新` 后重新配置服务中的该接口返回数据
 - 热更新成功后：
   - 接口标题区域显示成功状态
@@ -250,6 +257,64 @@ curl http://localhost:3666/mock-api/your/path
 
 - `lib/tuned-mock-db.ts`
 
+## 分页接口规则
+
+当前分页处理已经按接口语义做了区分：
+
+### 普通数组接口
+
+如果返回结构是：
+
+```json
+{
+  "rc": 0,
+  "msg": "",
+  "data": []
+}
+```
+
+规则：
+
+- `page/pageSize` 不会影响 `data` 数组数量
+- 始终按 Mock 数据预览区中配置的总量原样返回
+
+### 分页对象接口
+
+如果返回结构是：
+
+```json
+{
+  "rc": 0,
+  "msg": "",
+  "data": {
+    "items": [],
+    "total": 0,
+    "hasMore": false
+  }
+}
+```
+
+或：
+
+```json
+{
+  "rc": 0,
+  "msg": "",
+  "data": {
+    "item": [],
+    "total": 0,
+    "hasMore": false
+  }
+}
+```
+
+规则：
+
+- `page/pageSize` 只影响 `data.items` 或 `data.item` 的返回数量
+- `total` 永远取 Mock 数据预览区中配置的数据总量
+- 不会因为 `pageSize` 比实际数据量大，就把 `total` 错误放大
+- 不传分页参数时，返回预览区中配置的完整内容
+
 ## 技术栈
 
 - Next.js 16
@@ -263,6 +328,7 @@ curl http://localhost:3666/mock-api/your/path
 - assistant-ui
 - lucide-react
 - OpenAI SDK
+- DeepSeek Chat
 
 ## 安装与运行
 
@@ -335,18 +401,16 @@ lib/
 - `description` 字段在参数提示中展示
 - 右下角 AI 对话弹窗
 - 批量接口调优
-- 单接口 AI 调优
+- 单接口 AI 调优输入面板
 - Mock 数据可编辑并热更新
+- Mock 数据预览区与接口真实返回语义一致
 - 刷新 Mock 数据时自动清理当前接口的缓存
 - 接口操作结果通过 Alert 和卡片状态反馈
+- 热更新和 AI 调优都会驱动接口标题状态变化
+- 分页接口只限制 `items/item` 数量，不影响普通 `data` 数组总量
 
 ## 当前已知事项
 
-- `pnpm lint` 仍有一个旧 warning：
-  文件：`app/page.tsx`
-  规则：`@typescript-eslint/no-unused-expressions`
-
-这个 warning 与当前功能不冲突，但后续可以单独清理。
 
 ## 挑战部分：问题与场景
 

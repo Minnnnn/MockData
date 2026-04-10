@@ -8,30 +8,30 @@
       "path": "/scm/productAudit/pageList",
       "description": "商品审核分页查询",
       "payload": {
-        "msg": "desparatus votum",
+        "msg": "操作成功",
         "rc": 0,
         "data": {
           "items": [
             {
-              "id": "comitatus adinventitias",
-              "auditState": 670,
-              "shopName": "bellum audeo",
-              "shopCode": "truculenter tenuis",
-              "productCode": "vix vehemens",
-              "imgSrc": "quia qui",
-              "productName": "sumptus caterva",
-              "productType": "via benigne",
-              "retailPrice": 457.15,
-              "costPrice": 218.24,
-              "purchaseTax": 242.54,
-              "auditTime": "2026-04-09 19:03:51"
+              "id": "P202405210001",
+              "auditState": 2,
+              "shopName": "旗舰体验店",
+              "shopCode": "S001",
+              "productCode": "SKU123456",
+              "imgSrc": "https://example.com/images/product.jpg",
+              "productName": "智能手机 Pro Max",
+              "productType": "电子产品",
+              "retailPrice": 8999,
+              "costPrice": 6500,
+              "purchaseTax": 1350,
+              "auditTime": "2024-05-21 14:30:22"
             }
           ],
-          "total": 772,
+          "total": 1,
           "hasMore": false
         },
-        "trace": "curia totidem",
-        "success": false
+        "trace": "trace_66b3f8c7e12a",
+        "success": true
       },
       "totalCount": 1,
       "status": 200,
@@ -43,11 +43,8 @@
       "path": "/scm/productAudit/edit",
       "description": "商品审核单商品操作",
       "payload": {
-        "msg": "benigne amiculum",
         "rc": 0,
-        "data": {
-          "value": "earum"
-        },
+        "data": true,
         "trace": "vado caelestis",
         "success": true
       },
@@ -63,13 +60,13 @@
       "payload": {
         "msg": "tempus subnecto",
         "rc": 0,
-        "data": "victoria cerno",
+        "data": true,
         "trace": "cilicium corona",
         "success": false
       },
       "totalCount": 1,
-      "status": 200,
-      "delayMs": 0
+      "status": 500,
+      "delayMs": 1999
     },
     {
       "endpointId": "bulkAudit",
@@ -100,13 +97,97 @@
         "data": {
           "items": [
             {
-              "id": "deprecator antiquus",
+              "id": "deprecator antiquu2s",
               "shopName": "vetus aperio",
               "shopCode": "uterque volaticus",
               "productCode": "creo molestiae",
-              "imgUrl": "vilis provident",
-              "productName": "vorago numquam",
-              "productType": "sollicito villa",
+              "imgUrl": "https://example.com/insurance-policy-image.jpg",
+              "productName": "终身寿险保障计划",
+              "productType": "policy",
+              "retailPrice": 685.01,
+              "costPrice": 146.62,
+              "grossMargin": 985.08,
+              "purchaseTax": 845.22,
+              "stockNum": 79
+            },
+            {
+              "id": "deprecator antiquu11s",
+              "shopName": "vetus aperio",
+              "shopCode": "uterque volaticus",
+              "productCode": "creo molestiae",
+              "imgUrl": "https://example.com/insurance-policy-image.jpg",
+              "productName": "终身寿险保障计划",
+              "productType": "policy",
+              "retailPrice": 685.01,
+              "costPrice": 146.62,
+              "grossMargin": 985.08,
+              "purchaseTax": 845.22,
+              "stockNum": 79
+            },
+            {
+              "id": "deprecator antiquu12s",
+              "shopName": "vetus aperio",
+              "shopCode": "uterque volaticus",
+              "productCode": "creo molestiae",
+              "imgUrl": "https://example.com/insurance-policy-image.jpg",
+              "productName": "终身寿险保障计划",
+              "productType": "policy",
+              "retailPrice": 685.01,
+              "costPrice": 146.62,
+              "grossMargin": 985.08,
+              "purchaseTax": 845.22,
+              "stockNum": 79
+            },
+            {
+              "id": "deprecator antiquu13s",
+              "shopName": "vetus aperio",
+              "shopCode": "uterque volaticus",
+              "productCode": "creo molestiae",
+              "imgUrl": "https://example.com/insurance-policy-image.jpg",
+              "productName": "终身寿险保障计划",
+              "productType": "policy",
+              "retailPrice": 685.01,
+              "costPrice": 146.62,
+              "grossMargin": 985.08,
+              "purchaseTax": 845.22,
+              "stockNum": 79
+            },
+            {
+              "id": "deprecator antiquu14s",
+              "shopName": "vetus aperio",
+              "shopCode": "uterque volaticus",
+              "productCode": "creo molestiae",
+              "imgUrl": "https://example.com/insurance-policy-image.jpg",
+              "productName": "终身寿险保障计划",
+              "productType": "policy",
+              "retailPrice": 685.01,
+              "costPrice": 146.62,
+              "grossMargin": 985.08,
+              "purchaseTax": 845.22,
+              "stockNum": 79
+            },
+            {
+              "id": "deprecator antiquu15s",
+              "shopName": "vetus aperio",
+              "shopCode": "uterque volaticus",
+              "productCode": "creo molestiae",
+              "imgUrl": "https://example.com/insurance-policy-image.jpg",
+              "productName": "终身寿险保障计划",
+              "productType": "policy",
+              "retailPrice": 685.01,
+              "costPrice": 146.62,
+              "grossMargin": 985.08,
+              "purchaseTax": 845.22,
+              "stockNum": 79
+            },
+            {
+              "id": "deprecator antiquu16s",
+              "shopName": "vetus aperio",
+              "shopCode": "uterque volaticus",
+              "productCode": "creo molestiae",
+              "imgUrl": "https://example.com/insurance-policy-image.jpg",
+              "productName": "终身寿险保障计划",
+              "productType": "policy",
               "retailPrice": 685.01,
               "costPrice": 146.62,
               "grossMargin": 985.08,
@@ -114,7 +195,7 @@
               "stockNum": 79
             }
           ],
-          "total": 88,
+          "total": 7,
           "hasMore": false
         },
         "trace": "sumptus theca",
@@ -154,7 +235,7 @@
           "id": "valde desolo",
           "refusalReasons": [
             {
-              "time": "2026-04-10 09:40:05",
+              "time": "2026-04-10 11:11:43",
               "reason": "truculenter saepe"
             }
           ],
@@ -245,6 +326,350 @@
     }
   ],
   "logs": [
+    {
+      "id": "1775791963855_1bn9y0",
+      "time": "2026-04-10T03:32:43.855Z",
+      "method": "POST",
+      "path": "/scm/productAudit/bulkImport",
+      "status": 500,
+      "delayMs": 1999
+    },
+    {
+      "id": "1775791952888_m193pu",
+      "time": "2026-04-10T03:32:32.888Z",
+      "method": "POST",
+      "path": "/scm/productAudit/bulkImport",
+      "status": 500,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791944178_wn3nz1",
+      "time": "2026-04-10T03:32:24.178Z",
+      "method": "POST",
+      "path": "/scm/productAudit/bulkImport",
+      "status": 403,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791480391_674kw6",
+      "time": "2026-04-10T03:24:40.391Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791473673_abo3wu",
+      "time": "2026-04-10T03:24:33.673Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791467121_trg9s5",
+      "time": "2026-04-10T03:24:27.121Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791459468_p9wv0t",
+      "time": "2026-04-10T03:24:19.468Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791453409_fct21f",
+      "time": "2026-04-10T03:24:13.409Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791446567_8p8q6e",
+      "time": "2026-04-10T03:24:06.568Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791306362_ppdp2a",
+      "time": "2026-04-10T03:21:46.362Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791300846_e2greq",
+      "time": "2026-04-10T03:21:40.846Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791297596_ujyryj",
+      "time": "2026-04-10T03:21:37.596Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791291660_rubln2",
+      "time": "2026-04-10T03:21:31.660Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791270346_l6jf8a",
+      "time": "2026-04-10T03:21:10.346Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791246941_rmr12v",
+      "time": "2026-04-10T03:20:46.941Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791039889_562d9j",
+      "time": "2026-04-10T03:17:19.889Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791034130_culn1m",
+      "time": "2026-04-10T03:17:14.130Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791027131_29rt57",
+      "time": "2026-04-10T03:17:07.131Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775791016942_gtwiph",
+      "time": "2026-04-10T03:16:56.942Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775790640915_2c87yd",
+      "time": "2026-04-10T03:10:40.915Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775790638746_1gbnkk",
+      "time": "2026-04-10T03:10:38.746Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775790611121_7e4hen",
+      "time": "2026-04-10T03:10:11.121Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775790604540_az7xaz",
+      "time": "2026-04-10T03:10:04.541Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775790405157_4f2aq1",
+      "time": "2026-04-10T03:06:45.157Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775790397143_7wazxv",
+      "time": "2026-04-10T03:06:37.143Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775790218043_7hjaiz",
+      "time": "2026-04-10T03:03:38.043Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775790213929_0w8s1q",
+      "time": "2026-04-10T03:03:33.929Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775790207638_if51sr",
+      "time": "2026-04-10T03:03:27.638Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775790195773_2ezypm",
+      "time": "2026-04-10T03:03:15.773Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775789926730_qrlvq7",
+      "time": "2026-04-10T02:58:46.730Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775789919471_fne9ds",
+      "time": "2026-04-10T02:58:39.471Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775789898053_62gbaz",
+      "time": "2026-04-10T02:58:18.054Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775789890827_0rggoe",
+      "time": "2026-04-10T02:58:10.827Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775789853299_r22gyx",
+      "time": "2026-04-10T02:57:33.299Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775789842799_g9bj22",
+      "time": "2026-04-10T02:57:22.799Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775789832655_18vp3g",
+      "time": "2026-04-10T02:57:12.656Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775788034194_3h1ym9",
+      "time": "2026-04-10T02:27:14.194Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775787997953_eglu57",
+      "time": "2026-04-10T02:26:37.953Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775787996177_dwfmw8",
+      "time": "2026-04-10T02:26:36.177Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775787981242_s5my21",
+      "time": "2026-04-10T02:26:21.242Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775787966176_b9bced",
+      "time": "2026-04-10T02:26:06.176Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775787963758_dklcil",
+      "time": "2026-04-10T02:26:03.758Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1775787953753_i7dctx",
+      "time": "2026-04-10T02:25:53.754Z",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
     {
       "id": "1775785062093_zb47u7",
       "time": "2026-04-10T01:37:42.093Z",

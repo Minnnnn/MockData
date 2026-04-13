@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3666",
-    "build": "next build",
+    "build": "next build && node scripts/materialize-standalone.mjs",
     "start": "next start",
     "lint": "eslint"
   },
@@ -14,6 +14,7 @@
     "@faker-js/faker": "^8.0.2",
     "@heroui/react": "^3.0.1",
     "@heroui/styles": "^3.0.1",
+    "@next/env": "^16.2.3",
     "@swc/helpers": "^0.5.21",
     "lucide-react": "^1.8.0",
     "next": "16.2.1",
@@ -23,7 +24,6 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "remark-gfm": "^4.0.1",
-    "swagger-typescript-api": "^13.6.5",
     "zustand": "^5.0.12"
   },
   "devDependencies": {

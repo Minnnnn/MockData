@@ -51,10 +51,6 @@
 - 下载 `api.ts`
 - 在接口勾选变化后重新生成
 
-当前实现使用：
-
-- `swagger-typescript-api`
-
 ### 4. Mock 数据流程
 
 Mock 数据流程固定为 3 步：
@@ -315,7 +311,6 @@ curl http://localhost:3666/mock-api/your/path
 - TypeScript 5
 - HeroUI
 - Tailwind CSS 4
-- swagger-typescript-api
 - openapi-types
 - @faker-js/faker
 - assistant-ui

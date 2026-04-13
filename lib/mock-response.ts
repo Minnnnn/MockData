@@ -19,22 +19,10 @@ export function buildMockResponseBody(
   if (!isDefaultSuccessStatus) {
     const explicitEnvelope = extractResponseEnvelope(route.payload);
     if (explicitEnvelope) {
-      return normalizeMockValue(explicitEnvelope);
+      return normalizeMockValue(normalizeErrorEnvelope(explicitEnvelope, route.status, route.description, route.path));
     }
 
-    if (route.status === 403) {
-      return {
-        rc: 1,
-        msg: '请登录',
-        data: null
-      };
-    }
-
-    return {
-      rc: 1,
-      msg: `${route.description || route.path || '接口'}错误`,
-      data: null
-    };
+    return buildDefaultErrorEnvelope(route.status, route.description, route.path);
   }
 
   const data = buildSuccessData(route.payload, route.totalCount, requestParams);
@@ -60,7 +48,37 @@ export function parsePreviewResponseToPayload(response: unknown, status: number)
     throw new Error('非 200 响应必须是包含 rc、msg、data 的对象。');
   }
 
-  return envelope;
+  return normalizeErrorEnvelope(envelope, status);
+}
+
+function buildDefaultErrorEnvelope(status: number, description?: string, path?: string) {
+  if (status === 403) {
+    return {
+      rc: 1,
+      msg: '请登录',
+      data: null
+    };
+  }
+
+  return {
+    rc: 1,
+    msg: `${description || path || '接口'}错误`,
+    data: null
+  };
+}
+
+function normalizeErrorEnvelope(
+  envelope: { rc: number; msg: string; data: unknown },
+  status: number,
+  description?: string,
+  path?: string
+) {
+  const fallback = buildDefaultErrorEnvelope(status, description, path);
+  return {
+    rc: 1,
+    msg: envelope.msg || fallback.msg,
+    data: envelope.data ?? fallback.data
+  };
 }
 
 function buildSuccessData(

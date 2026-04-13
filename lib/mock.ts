@@ -2,67 +2,22 @@ import { faker } from '@faker-js/faker';
 import { getFixedImageUrls, pickImageUrl, pickRandomImageSubset } from '@/lib/fixed-image-url';
 import { EndpointDefinition, EndpointMock, MockStrategyConfig } from '@/lib/types';
 
-type GeneratedRoute = {
-  id: string;
-  routeName: { usage: string };
-  raw: { operationId?: string; route?: string; method?: string };
-  request: {
-    path?: string;
-    method?: string;
-    pathParams?: unknown;
-    requestParams?: unknown;
-    payload?: {
-      name?: string | null;
-      optional?: boolean;
-      type: string;
-    };
-  };
-  response: {
-    type?: string;
-  };
-};
-
 export async function generateTsArtifacts(
-  openapiDocument: unknown,
-  endpoints: EndpointDefinition[],
+  _openapiDocument: unknown,
+  endpoints: EndpointDefinition[]
 ): Promise<{ typesTs: string; apiTs: string }> {
-  const filteredSpec = filterOpenApiDocument(openapiDocument, endpoints);
-  const { generateApi } = await import('swagger-typescript-api');
-  const output = await generateApi({
-    spec: filteredSpec,
-    modular: true,
-    generateClient: true,
-    extractRequestParams: true,
-    extractRequestBody: true,
-    extractResponseBody: true,
-    extractResponseError: true,
-    extractEnums: true,
-    generateUnionEnums: true,
-    silent: true,
-    fileName: 'api.ts',
-  });
-
-  const typesFile = output.files.find((file) => `${file.fileName}${file.fileExtension}` === 'data-contracts.ts');
-  const typesTs = typesFile?.fileContent?.trim() || 'export {}';
-  const modelNames = new Set(output.configuration.modelTypes.map((item) => item.name));
-  const routes: GeneratedRoute[] = [
-    ...(output.configuration.routes.outOfModule as GeneratedRoute[]),
-    ...((output.configuration.routes.combined?.flatMap((item) => item.routes) ?? []) as GeneratedRoute[]),
-  ];
-  const apiTs = await output.formatTSContent(buildApiFile(routes, modelNames), {
-    removeUnusedImports: true,
-    format: true,
-  });
+  const typesTs = buildTypesFile(endpoints);
+  const apiTs = buildApiFile(endpoints);
 
   return {
     typesTs,
-    apiTs,
+    apiTs
   };
 }
 
 export function generateEndpointMocks(
   endpoints: EndpointDefinition[],
-  strategy: MockStrategyConfig,
+  strategy: MockStrategyConfig
 ): Record<string, EndpointMock> {
   const result: Record<string, EndpointMock> = {};
 
@@ -76,7 +31,9 @@ export function generateEndpointMocks(
         faker.seed(hashCode(`${endpoint.id}-${i}`));
       }
 
-      const payload = mockFromSchema(endpoint.responseSchema, strategy, endpoint.path, endpoint);
+      const payload = normalizeGeneratedPayload(
+        mockFromSchema(endpoint.responseSchema, strategy, endpoint.path, endpoint)
+      );
       items.push(maybeInjectAnomaly(payload, strategy.anomalyRate));
     }
 
@@ -85,8 +42,8 @@ export function generateEndpointMocks(
       items,
       runtime: {
         status: endpoint.statusCodes.find((code) => code >= 200 && code < 300) ?? 200,
-        delayMs: 0,
-      },
+        delayMs: 0
+      }
     };
   }
 
@@ -147,85 +104,75 @@ export function tuneMockJsonByPrompt(jsonText: string, prompt: string): { output
 
   return {
     output: JSON.stringify(output, null, 2),
-    changedKeys: [...changed],
+    changedKeys: [...changed]
   };
 }
 
-function buildApiFile(routes: GeneratedRoute[], modelNames: Set<string>): string {
+function buildTypesFile(endpoints: EndpointDefinition[]): string {
+  if (endpoints.length === 0) {
+    return 'export {};';
+  }
+
+  const lines: string[] = [];
+
+  for (const endpoint of endpoints) {
+    const baseName = buildEndpointTypeName(endpoint);
+    const requestType = schemaToTs(endpoint.requestSchema, `${baseName}Request`, 0);
+    const responseType = schemaToTs(endpoint.responseSchema, `${baseName}Response`, 0);
+    const endpointDescription = endpoint.description || endpoint.summary || endpoint.path;
+
+    lines.push(...buildJsDocLines(`${endpointDescription} - 请求参数`));
+    lines.push(`export type ${baseName}Request = ${requestType};`);
+    lines.push(...buildJsDocLines(`${endpointDescription} - 响应结果`));
+    lines.push(`export type ${baseName}Response = ${responseType};`);
+    lines.push('');
+  }
+
+  return lines.join('\n').trim();
+}
+
+function buildApiFile(endpoints: EndpointDefinition[]): string {
   const lines: string[] = ["import type * as Types from './types';", ''];
 
-  if (routes.length === 0) {
+  if (endpoints.length === 0) {
     lines.push('export {};');
     return lines.join('\n');
   }
 
-  for (const route of routes) {
-    const fnName = safeIdentifier(route.routeName.usage || route.raw.operationId || route.id);
-    const signature = buildFunctionSignature(route, modelNames);
-    const returnType = mapTypeExpression(route.response.type || 'unknown', modelNames);
-    const pathLiteral = buildPathLiteral(route.request.path || route.raw.route || '/');
-    const requestOptions = buildRequestOptions(route);
+  lines.push(
+    'type RequestOptions = {',
+    "  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD';",
+    '  params?: Record<string, unknown>;',
+    '  data?: unknown;',
+    '};',
+    '',
+    'declare function customRequest<T>(path: string, options: RequestOptions): Promise<T>;',
+    ''
+  );
 
+  for (const endpoint of endpoints) {
+    const baseName = buildEndpointTypeName(endpoint);
+    const fnName = safeIdentifier(endpoint.operationId || `${endpoint.method}_${endpoint.path}`);
+    const pathLiteral = buildPathLiteral(endpoint.path);
+    const method = endpoint.method.toUpperCase();
+    const endpointDescription = endpoint.description || endpoint.summary || endpoint.path;
+
+    lines.push(...buildJsDocLines([endpointDescription, `${method} ${endpoint.path}`]));
     lines.push(`export const ${fnName} = async (`);
-    if (signature.length > 0) {
-      lines.push(...signature.map((line) => `  ${line}`));
-    }
+    lines.push(`  request?: Types.${baseName}Request,`);
     lines.push(
-      `): Promise<${returnType}> => {`,
+      `): Promise<Types.${baseName}Response> => {`,
       `  return customRequest(${pathLiteral}, {`,
-      ...requestOptions.map((line) => `    ${line}`),
+      `    method: '${method}',`,
+      "    params: request as Record<string, unknown>,",
+      "    data: request,",
       '  });',
       '};',
-      '',
+      ''
     );
   }
 
   return lines.join('\n');
-}
-
-function buildFunctionSignature(route: GeneratedRoute, modelNames: Set<string>): string[] {
-  const params: string[] = [];
-  const usedNames = new Set<string>();
-  const pathParams = extractObjectFields(route.request.pathParams);
-  const requestParams = extractObjectFields(route.request.requestParams);
-
-  for (const field of [...pathParams, ...requestParams]) {
-    const fieldName = safeIdentifier(field.name);
-    if (usedNames.has(fieldName)) {
-      continue;
-    }
-    usedNames.add(fieldName);
-    params.push(`${fieldName}${field.required ? '' : '?'}: ${mapTypeExpression(field.type, modelNames)},`);
-  }
-
-  if (route.request.payload?.type) {
-    const payloadName = safeIdentifier(route.request.payload.name || 'data');
-    const optional = route.request.payload.optional ? '?' : '';
-    params.push(`${payloadName}${optional}: ${mapTypeExpression(route.request.payload.type, modelNames)},`);
-  }
-
-  return params;
-}
-
-function buildRequestOptions(route: GeneratedRoute): string[] {
-  const options = [`method: '${String(route.request.method || route.raw.method || 'get').toUpperCase()}',`];
-  const queryFields = [...new Set(
-    extractObjectFields(route.request.requestParams)
-      .filter((field) => field.source === 'query')
-      .map((field) => safeIdentifier(field.name)),
-  )];
-
-  if (queryFields.length > 0) {
-    options.push('params: {');
-    options.push(...queryFields.map((name) => `  ${name},`));
-    options.push('},');
-  }
-
-  if (route.request.payload?.type) {
-    options.push(`data: ${safeIdentifier(route.request.payload.name || 'data')},`);
-  }
-
-  return options;
 }
 
 function buildPathLiteral(path: string): string {
@@ -233,155 +180,121 @@ function buildPathLiteral(path: string): string {
   return normalized.includes('${') ? `\`${normalized}\`` : `'${normalized}'`;
 }
 
-function mapTypeExpression(typeExpression: string, modelNames: Set<string>): string {
-  let output = typeExpression;
-  const sortedNames = [...modelNames].sort((a, b) => b.length - a.length);
-
-  for (const name of sortedNames) {
-    output = output.replace(new RegExp(`(^|[^\\w.])(${escapeRegExp(name)})(?=\\b)`, 'g'), (_, prefix, matched) => {
-      if (String(prefix).endsWith('.')) {
-        return `${prefix}${matched}`;
-      }
-      return `${prefix}Types.${matched}`;
-    });
-  }
-
-  return output;
+function buildEndpointTypeName(endpoint: EndpointDefinition): string {
+  const source = endpoint.operationId || `${endpoint.method}_${endpoint.path}`;
+  return `${toPascalCase(source)}Payload`;
 }
 
-function extractObjectFields(schema: unknown): Array<{ name: string; type: string; required: boolean; source?: string }> {
-  const schemaObject = schema as
-    | {
-        typeData?: { content?: unknown[] };
-        rawTypeData?: { $parsed?: { content?: unknown[] } };
-      }
-    | undefined;
-  const content = Array.isArray(schemaObject?.typeData?.content)
-    ? schemaObject.typeData.content
-    : (schemaObject?.rawTypeData?.$parsed?.content ?? []);
+function toPascalCase(value: string): string {
+  const normalized = value
+    .replace(/[{}]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, ' ')
+    .trim();
+  const words = normalized ? normalized.split(/\s+/) : ['endpoint'];
+  return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join('');
+}
 
-  if (!Array.isArray(content)) {
+function schemaToTs(schema: Record<string, unknown> | undefined, fallbackName: string, depth: number): string {
+  if (!schema) {
+    return 'Record<string, unknown>';
+  }
+
+  if (schema.$ref && typeof schema.$ref === 'string') {
+    return toPascalCase(schema.$ref.split('/').pop() || fallbackName);
+  }
+
+  if (Array.isArray(schema.enum) && schema.enum.length > 0) {
+    return schema.enum.map((item) => JSON.stringify(item)).join(' | ');
+  }
+
+  if (Array.isArray(schema.oneOf) && schema.oneOf.length > 0) {
+    return schema.oneOf
+      .map((item, index) => schemaToTs(asSchema(item), `${fallbackName}Option${index + 1}`, depth + 1))
+      .join(' | ');
+  }
+
+  if (Array.isArray(schema.anyOf) && schema.anyOf.length > 0) {
+    return schema.anyOf
+      .map((item, index) => schemaToTs(asSchema(item), `${fallbackName}Variant${index + 1}`, depth + 1))
+      .join(' | ');
+  }
+
+  if (Array.isArray(schema.allOf) && schema.allOf.length > 0) {
+    return schema.allOf
+      .map((item, index) => schemaToTs(asSchema(item), `${fallbackName}Part${index + 1}`, depth + 1))
+      .join(' & ');
+  }
+
+  if (schema.type === 'array') {
+    return `Array<${schemaToTs(asSchema(schema.items), `${fallbackName}Item`, depth + 1)}>`;
+  }
+
+  if (schema.type === 'object' || isRecord(schema.properties)) {
+    const properties = isRecord(schema.properties) ? (schema.properties as Record<string, unknown>) : {};
+    const required = new Set(Array.isArray(schema.required) ? (schema.required as string[]) : []);
+    const entries = Object.entries(properties);
+
+    if (entries.length === 0) {
+      return 'Record<string, unknown>';
+    }
+
+    const indent = '  '.repeat(depth + 1);
+    const closingIndent = '  '.repeat(depth);
+    const lines = entries.flatMap(([key, value]) => {
+      const optional = required.has(key) ? '' : '?';
+      const propertySchema = asSchema(value);
+      const propertyType = schemaToTs(propertySchema, `${fallbackName}${toPascalCase(key)}`, depth + 1);
+      const description = propertySchema?.description;
+      const commentLines =
+        typeof description === 'string' && description.trim()
+          ? buildJsDocLines(description, depth + 1)
+          : [];
+
+      return [...commentLines, `${indent}${JSON.stringify(key)}${optional}: ${propertyType};`];
+    });
+
+    if (schema.additionalProperties) {
+      lines.push(
+        `${indent}[key: string]: ${schemaToTs(asSchema(schema.additionalProperties), `${fallbackName}Value`, depth + 1)};`
+      );
+    }
+
+    return `{\n${lines.join('\n')}\n${closingIndent}}`;
+  }
+
+  if (schema.type === 'string') return 'string';
+  if (schema.type === 'integer' || schema.type === 'number') return 'number';
+  if (schema.type === 'boolean') return 'boolean';
+  if (schema.type === 'null') return 'null';
+  return 'unknown';
+}
+
+function asSchema(value: unknown): Record<string, unknown> | undefined {
+  return isRecord(value) ? value : undefined;
+}
+
+function buildJsDocLines(content: string | string[], depth = 0): string[] {
+  const values = Array.isArray(content) ? content : [content];
+  const cleaned = values
+    .flatMap((item) => String(item).split('\n'))
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (cleaned.length === 0) {
     return [];
   }
 
-  return content
-    .map((item) => item as { name?: string; value?: string; isRequired?: boolean; in?: string })
-    .filter((item) => !!item.name && !!item.value)
-    .map((item) => ({
-      name: String(item.name),
-      type: String(item.value),
-      required: Boolean(item.isRequired),
-      source: typeof item.in === 'string' ? item.in : undefined,
-    }));
+  const indent = '  '.repeat(depth);
+  const lines = [`${indent}/**`];
+  for (const line of cleaned) {
+    lines.push(`${indent} * ${sanitizeComment(line)}`);
+  }
+  lines.push(`${indent} */`);
+  return lines;
 }
 
-function filterOpenApiDocument(openapiDocument: unknown, endpoints: EndpointDefinition[]): Record<string, unknown> {
-  const source = JSON.parse(JSON.stringify(openapiDocument ?? {})) as Record<string, unknown>;
-  const sourcePaths = (source.paths ?? {}) as Record<string, Record<string, unknown>>;
-  const selectedKeys = new Set(endpoints.map((item) => `${item.method.toLowerCase()} ${item.path}`));
-  const nextPaths: Record<string, Record<string, unknown>> = {};
-
-  for (const endpoint of endpoints) {
-    const pathItem = sourcePaths[endpoint.path];
-    const operation = pathItem?.[endpoint.method];
-    if (!pathItem || !operation || typeof operation !== 'object') {
-      continue;
-    }
-
-    if (!nextPaths[endpoint.path]) {
-      nextPaths[endpoint.path] = {};
-      for (const key of Object.keys(pathItem)) {
-        if (!isHttpMethodKey(key) && key !== '$ref') {
-          nextPaths[endpoint.path][key] = pathItem[key];
-        }
-      }
-    }
-
-    nextPaths[endpoint.path][endpoint.method] = operation;
-  }
-
-  const nextDoc: Record<string, unknown> = {
-    ...source,
-    paths: nextPaths,
-  };
-
-  const refsToVisit = new Set<string>();
-  const visitedRefs = new Set<string>();
-
-  collectRefsFromValue(nextDoc.paths, refsToVisit);
-
-  const sourceComponents = isRecord(source.components) ? (source.components as Record<string, unknown>) : {};
-  const nextComponents: Record<string, Record<string, unknown>> = {};
-
-  while (refsToVisit.size > 0) {
-    const [ref] = refsToVisit;
-    refsToVisit.delete(ref);
-
-    if (visitedRefs.has(ref) || !ref.startsWith('#/components/')) {
-      continue;
-    }
-    visitedRefs.add(ref);
-
-    const segments = ref.slice(2).split('/').map((part) => decodeURIComponent(part));
-    if (segments.length < 3) {
-      continue;
-    }
-
-    const [, sectionName, itemName] = segments;
-    const sourceSection = sourceComponents[sectionName];
-    if (!isRecord(sourceSection)) {
-      continue;
-    }
-
-    const sourceItem = sourceSection[itemName];
-    if (sourceItem === undefined) {
-      continue;
-    }
-
-    if (!nextComponents[sectionName]) {
-      nextComponents[sectionName] = {};
-    }
-    nextComponents[sectionName][itemName] = sourceItem as Record<string, unknown>;
-    collectRefsFromValue(sourceItem, refsToVisit);
-  }
-
-  if (Object.keys(nextComponents).length > 0) {
-    nextDoc.components = nextComponents;
-  } else {
-    delete nextDoc.components;
-  }
-
-  if (selectedKeys.size === 0) {
-    nextDoc.paths = {};
-    delete nextDoc.components;
-  }
-
-  return nextDoc;
-}
-
-function collectRefsFromValue(value: unknown, refs: Set<string>): void {
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      collectRefsFromValue(item, refs);
-    }
-    return;
-  }
-
-  if (!isRecord(value)) {
-    return;
-  }
-
-  if (typeof value.$ref === 'string') {
-    refs.add(value.$ref);
-  }
-
-  for (const key of Object.keys(value)) {
-    collectRefsFromValue(value[key], refs);
-  }
-}
-
-function isHttpMethodKey(value: string): boolean {
-  return ['get', 'post', 'put', 'delete', 'patch', 'options', 'head', 'trace'].includes(value.toLowerCase());
+function sanitizeComment(value: string): string {
+  return value.replace(/\*\//g, '* /');
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -392,7 +305,7 @@ function mockFromSchema(
   schema: Record<string, unknown> | undefined,
   strategy: MockStrategyConfig,
   contextKey: string,
-  endpoint: EndpointDefinition,
+  endpoint: EndpointDefinition
 ): unknown {
   if (!schema) {
     return {};
@@ -443,7 +356,9 @@ function mockFromSchema(
     }
 
     const count = getArrayLengthForContext(endpoint, strategy, contextKey);
-    return Array.from({ length: count }, (_, i) => mockFromSchema(itemsSchema, strategy, `${contextKey}[${i}]`, endpoint));
+    return Array.from({ length: count }, (_, i) =>
+      mockFromSchema(itemsSchema, strategy, `${contextKey}[${i}]`, endpoint)
+    );
   }
 
   if (schema.type === 'string') {
@@ -492,12 +407,12 @@ function mergeAllOfSchemas(items: Record<string, unknown>[]): Record<string, unk
     if (item.properties && typeof item.properties === 'object') {
       merged.properties = {
         ...(merged.properties as Record<string, unknown>),
-        ...(item.properties as Record<string, unknown>),
+        ...(item.properties as Record<string, unknown>)
       };
     }
 
     if (Array.isArray(item.required)) {
-      merged.required = [...new Set([...(merged.required as string[]), ...item.required as string[]])];
+      merged.required = [...new Set([...(merged.required as string[]), ...(item.required as string[])])];
     }
 
     if (item.items) {
@@ -572,10 +487,69 @@ function inferByName(key: string): unknown {
 }
 
 function shouldGenerateMultiplePayloads(endpoint: EndpointDefinition): boolean {
-  return isPaginatedEndpoint(endpoint);
+  return isArrayDataEndpoint(endpoint);
 }
 
-function getArrayLengthForContext(endpoint: EndpointDefinition, strategy: MockStrategyConfig, contextKey: string): number {
+function normalizeGeneratedPayload(input: unknown): unknown {
+  if (Array.isArray(input)) {
+    return input.map((item) => normalizeGeneratedPayload(item));
+  }
+
+  if (!isRecord(input)) {
+    return input;
+  }
+
+  const output: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(input)) {
+    output[key] = normalizeGeneratedPayload(value);
+  }
+
+  syncPaginationFields(output);
+  return output;
+}
+
+function syncPaginationFields(record: Record<string, unknown>) {
+  const collection = getPaginationCollection(record);
+  if (!collection) {
+    return;
+  }
+
+  const total = collection.length;
+
+  if ('total' in record) {
+    record.total = total;
+  }
+
+  if ('totalCount' in record) {
+    record.totalCount = total;
+  }
+
+  if ('hasMore' in record) {
+    record.hasMore = false;
+  }
+
+  if ('hasmore' in record) {
+    record.hasmore = false;
+  }
+}
+
+function getPaginationCollection(record: Record<string, unknown>): unknown[] | null {
+  if (Array.isArray(record.items)) {
+    return record.items;
+  }
+
+  if (Array.isArray(record.item)) {
+    return record.item;
+  }
+
+  return null;
+}
+
+function getArrayLengthForContext(
+  endpoint: EndpointDefinition,
+  strategy: MockStrategyConfig,
+  contextKey: string
+): number {
   if (isPaginatedItemsContext(endpoint, contextKey) || isArrayDataContext(endpoint, contextKey)) {
     return Math.max(strategy.count, 1);
   }
@@ -632,7 +606,7 @@ function formatShanghaiDateTime(input: Date = new Date()): string {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: false,
+    hour12: false
   });
 
   return formatter.format(input).replace(' ', ' ');
@@ -641,10 +615,6 @@ function formatShanghaiDateTime(input: Date = new Date()): string {
 function safeIdentifier(value: string): string {
   const normalized = value.replace(/[^a-zA-Z0-9_$]/g, '_');
   return /^[A-Za-z_$]/.test(normalized) ? normalized : `_${normalized}`;
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function toNum(value: unknown, fallback: number): number {
@@ -667,4 +637,3 @@ function isImageFieldKey(key: string): boolean {
 function isRcField(key: string): boolean {
   return /(^|[._\[])(rc)(\]|$)/i.test(key);
 }
-

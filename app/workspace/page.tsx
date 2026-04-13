@@ -442,7 +442,7 @@ export default function WorkspacePage() {
         }
       }
 
-        setMocks(nextState);
+      setMocks(nextState);
       setMockDrafts((prev) => {
         const nextDrafts = { ...prev };
         for (const endpointId of effectiveTargetIds) {
@@ -637,11 +637,11 @@ export default function WorkspacePage() {
       return;
     }
 
-      const nextPayload = parsePreviewResponseToPayload(parsed, runtime.status);
-      const nextItems = Array.isArray(nextPayload) ? nextPayload : [nextPayload];
-      const nextMocks = {
-        ...mocks,
-        [endpointId]: {
+    const nextPayload = parsePreviewResponseToPayload(parsed, runtime.status);
+    const nextItems = Array.isArray(nextPayload) ? nextPayload : [nextPayload];
+    const nextMocks = {
+      ...mocks,
+      [endpointId]: {
         ...(mocks[endpointId] ?? {
           endpointId,
           runtime: { status: 200, delayMs: 0 }
@@ -802,9 +802,9 @@ export default function WorkspacePage() {
               <TextArea value={typesTs || '// 暂无类型内容'} readOnly rows={45} />
             </Card.Content>
             <Card.Footer className='panel-actions'>
-              <Button variant='outline' onPress={regenerateTypes} isDisabled={selectedIds.length === 0 || loading}>
+              {/* <Button variant='outline' onPress={regenerateTypes} isDisabled={selectedIds.length === 0 || loading}>
                 重新生成 TS
-              </Button>
+              </Button> */}
               <Button variant='outline' onPress={() => downloadText('types.ts', typesTs)} isDisabled={!typesTs}>
                 下载 types.ts
               </Button>
@@ -899,13 +899,13 @@ export default function WorkspacePage() {
                   </Accordion>
 
                   <div className='panel-actions'>
-                    <Button
+                    {/* <Button
                       variant='outline'
                       onPress={regenerateTypes}
                       isDisabled={selectedIds.length === 0 || loading}
                     >
                       同步并更新 TS
-                    </Button>
+                    </Button> */}
                     <Button variant='primary' onPress={() => setMockStep(2)} isDisabled={selectedIds.length === 0}>
                       下一步
                     </Button>
@@ -1006,7 +1006,9 @@ export default function WorkspacePage() {
                                 </Card.Title>
                               </Alert.Content>
                             </Alert>
-                            {tunedEndpointIdSet.has(activeEndpoint.id) ? <Card.Description>已优先使用 AI 调优数据</Card.Description> : null}
+                            {tunedEndpointIdSet.has(activeEndpoint.id) ? (
+                              <Card.Description>已优先使用 AI 调优数据</Card.Description>
+                            ) : null}
                           </Card.Header>
                           <Card.Content>
                             <div className='runtime-grid'>
@@ -1104,14 +1106,20 @@ export default function WorkspacePage() {
                                   <TextArea
                                     value={
                                       mockDrafts[activeEndpoint.id] ??
-                                      JSON.stringify(buildPreviewResponse(activeEndpoint, mocks[activeEndpoint.id]), null, 2)
+                                      JSON.stringify(
+                                        buildPreviewResponse(activeEndpoint, mocks[activeEndpoint.id]),
+                                        null,
+                                        2
+                                      )
                                     }
                                     onChange={(event) => updateMockDraft(activeEndpoint.id, event.target.value)}
                                     rows={18}
                                     className='mono-area mono-area--preview'
                                   />
                                   {mockDraftErrors[activeEndpoint.id] ? (
-                                    <p className='status-text status-text--error'>{mockDraftErrors[activeEndpoint.id]}</p>
+                                    <p className='status-text status-text--error'>
+                                      {mockDraftErrors[activeEndpoint.id]}
+                                    </p>
                                   ) : null}
                                 </div>
                               </div>
@@ -1174,7 +1182,9 @@ const WorkspaceSelectionCard = memo(function WorkspaceSelectionCard({
             {endpoint.method.toUpperCase()}
           </Chip>
           <div className='endpoint-option-card__state' aria-hidden='true'>
-            <span className={`endpoint-option-card__indicator ${selected ? 'endpoint-option-card__indicator--selected' : ''}`} />
+            <span
+              className={`endpoint-option-card__indicator ${selected ? 'endpoint-option-card__indicator--selected' : ''}`}
+            />
             <span>{selected ? '已选中' : '未选中'}</span>
           </div>
         </div>

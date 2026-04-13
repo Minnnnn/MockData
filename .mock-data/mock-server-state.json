@@ -8,44 +8,52 @@
       "path": "/scm/productAudit/pageList",
       "description": "商品审核分页查询",
       "payload": {
-        "msg": "操作成功",
-        "rc": 0,
-        "data": {
-          "items": [
-            {
-              "id": "P202405210001",
-              "auditState": 2,
-              "shopName": "旗舰体验店",
-              "shopCode": "S001",
-              "productCode": "SKU123456",
-              "imgSrc": "https://example.com/images/product.jpg",
-              "productName": "智能手机 Pro Max",
-              "productType": "电子产品",
-              "retailPrice": 8999,
-              "costPrice": 6500,
-              "purchaseTax": 1350,
-              "auditTime": "2024-05-21 14:30:22"
-            },
-            {
-              "id": "P202405210002",
-              "auditState": 1,
-              "shopName": "线上直营店",
-              "shopCode": "S002",
-              "productCode": "SKU789012",
-              "imgSrc": "https://example.com/images/product2.jpg",
-              "productName": "无线蓝牙耳机",
-              "productType": "电子产品",
-              "retailPrice": 699,
-              "costPrice": 450,
-              "purchaseTax": 90,
-              "auditTime": "2024-05-22 10:15:00"
-            }
-          ],
-          "total": 2,
-          "hasMore": false
-        },
-        "trace": "trace_66b3f8c7e12a",
-        "success": true
+        "items": [
+          {
+            "id": "P202405210001",
+            "auditState": 2,
+            "shopName": "旗舰体验店",
+            "shopCode": "S001",
+            "productCode": "SKU123456",
+            "imgSrc": "https://example.com/images/product.jpg",
+            "productName": "智能手机 Pro Max",
+            "productType": "电子产品",
+            "retailPrice": 8999,
+            "costPrice": 6500,
+            "purchaseTax": 1350,
+            "auditTime": "2024-05-21 14:30:22"
+          },
+          {
+            "id": "P202405210002",
+            "auditState": 1,
+            "shopName": "线上直营店",
+            "shopCode": "S002",
+            "productCode": "SKU789012",
+            "imgSrc": "https://example.com/images/product2.jpg",
+            "productName": "无线蓝牙耳机",
+            "productType": "电子产品",
+            "retailPrice": 699,
+            "costPrice": 450,
+            "purchaseTax": 90,
+            "auditTime": "2024-05-22 10:15:00"
+          },
+          {
+            "id": "P202405210002",
+            "auditState": 1,
+            "shopName": "线上直营店",
+            "shopCode": "S002",
+            "productCode": "SKU789012",
+            "imgSrc": "https://example.com/images/product2.jpg",
+            "productName": "无线蓝牙耳机",
+            "productType": "电子产品",
+            "retailPrice": 699,
+            "costPrice": 450,
+            "purchaseTax": 90,
+            "auditTime": "2024-05-22 10:15:00"
+          }
+        ],
+        "total": 2,
+        "hasMore": false
       },
       "totalCount": 1,
       "status": 200,
@@ -56,12 +64,7 @@
       "method": "POST",
       "path": "/scm/productAudit/edit",
       "description": "商品审核单商品操作",
-      "payload": {
-        "rc": 0,
-        "data": false,
-        "trace": "vado caelestis",
-        "success": true
-      },
+      "payload": true,
       "totalCount": 1,
       "status": 200,
       "delayMs": 0
@@ -94,6 +97,950 @@
           "value": "vis"
         },
         "trace": "capto socius",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "pageList_1",
+      "method": "POST",
+      "path": "/scm/product/pageList",
+      "description": "商品列表分页查询",
+      "payload": {
+        "msg": "apto conforto",
+        "rc": 0,
+        "data": {
+          "items": [
+            {
+              "id": "deprecator antiquu2s",
+              "shopName": "vetus aperio",
+              "shopCode": "uterque volaticus",
+              "productCode": "creo molestiae",
+              "imgUrl": "https://example.com/insurance-policy-image.jpg",
+              "productName": "终身寿险保障计划",
+              "productType": "policy",
+              "retailPrice": 685.01,
+              "costPrice": 146.62,
+              "grossMargin": 985.08,
+              "purchaseTax": 845.22,
+              "stockNum": 79
+            },
+            {
+              "id": "deprecator antiquu11s",
+              "shopName": "vetus aperio",
+              "shopCode": "uterque volaticus",
+              "productCode": "creo molestiae",
+              "imgUrl": "https://example.com/insurance-policy-image.jpg",
+              "productName": "终身寿险保障计划",
+              "productType": "policy",
+              "retailPrice": 685.01,
+              "costPrice": 146.62,
+              "grossMargin": 985.08,
+              "purchaseTax": 845.22,
+              "stockNum": 79
+            },
+            {
+              "id": "deprecator antiquu12s",
+              "shopName": "vetus aperio",
+              "shopCode": "uterque volaticus",
+              "productCode": "creo molestiae",
+              "imgUrl": "https://example.com/insurance-policy-image.jpg",
+              "productName": "终身寿险保障计划",
+              "productType": "policy",
+              "retailPrice": 685.01,
+              "costPrice": 146.62,
+              "grossMargin": 985.08,
+              "purchaseTax": 845.22,
+              "stockNum": 79
+            },
+            {
+              "id": "deprecator antiquu13s",
+              "shopName": "vetus aperio",
+              "shopCode": "uterque volaticus",
+              "productCode": "creo molestiae",
+              "imgUrl": "https://example.com/insurance-policy-image.jpg",
+              "productName": "终身寿险保障计划",
+              "productType": "policy",
+              "retailPrice": 685.01,
+              "costPrice": 146.62,
+              "grossMargin": 985.08,
+              "purchaseTax": 845.22,
+              "stockNum": 79
+            },
+            {
+              "id": "deprecator antiquu14s",
+              "shopName": "vetus aperio",
+              "shopCode": "uterque volaticus",
+              "productCode": "creo molestiae",
+              "imgUrl": "https://example.com/insurance-policy-image.jpg",
+              "productName": "终身寿险保障计划",
+              "productType": "policy",
+              "retailPrice": 685.01,
+              "costPrice": 146.62,
+              "grossMargin": 985.08,
+              "purchaseTax": 845.22,
+              "stockNum": 79
+            },
+            {
+              "id": "deprecator antiquu15s",
+              "shopName": "vetus aperio",
+              "shopCode": "uterque volaticus",
+              "productCode": "creo molestiae",
+              "imgUrl": "https://example.com/insurance-policy-image.jpg",
+              "productName": "终身寿险保障计划",
+              "productType": "policy",
+              "retailPrice": 685.01,
+              "costPrice": 146.62,
+              "grossMargin": 985.08,
+              "purchaseTax": 845.22,
+              "stockNum": 79
+            },
+            {
+              "id": "deprecator antiquu16s",
+              "shopName": "vetus aperio",
+              "shopCode": "uterque volaticus",
+              "productCode": "creo molestiae",
+              "imgUrl": "https://example.com/insurance-policy-image.jpg",
+              "productName": "终身寿险保障计划",
+              "productType": "policy",
+              "retailPrice": 685.01,
+              "costPrice": 146.62,
+              "grossMargin": 985.08,
+              "purchaseTax": 845.22,
+              "stockNum": 79
+            }
+          ],
+          "total": 7,
+          "hasMore": false
+        },
+        "trace": "sumptus theca",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "save",
+      "method": "POST",
+      "path": "/scm/product/edit",
+      "description": "商品单商品操作",
+      "payload": {
+        "msg": "arx taedium",
+        "rc": 0,
+        "data": {
+          "value": "absconditus"
+        },
+        "trace": "suppono degero",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "thirdPageList",
+      "method": "POST",
+      "path": "/productType/thirdPageList",
+      "description": "商品三级分类分页查询",
+      "payload": {
+        "msg": "bibo vulnus",
+        "rc": 0,
+        "data": {
+          "items": [
+            {
+              "id": "creta vir",
+              "parentId": "condico fugiat",
+              "typeName": "delego contabesco",
+              "leaf": true
+            }
+          ],
+          "total": 445,
+          "hasMore": false
+        },
+        "trace": "iste spero",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "thirdList",
+      "method": "POST",
+      "path": "/productType/thirdList",
+      "description": "所有的第三级分类列表",
+      "payload": {
+        "msg": "tempora crapula",
+        "rc": 0,
+        "data": [
+          {
+            "id": "cognomen nostrum",
+            "parentId": "quaerat vinum",
+            "typeName": "demulceo cohors",
+            "leaf": true
+          }
+        ],
+        "trace": "apostolus condico",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "saveOrUpdate",
+      "method": "POST",
+      "path": "/productType/saveOrUpdate",
+      "description": "商品分类新增或编辑",
+      "payload": {
+        "msg": "commodi theologus",
+        "rc": 0,
+        "data": {
+          "value": "2026-04-13 14:39:24"
+        },
+        "trace": "asporto peior",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "pageList_2",
+      "method": "POST",
+      "path": "/productType/pageList",
+      "description": "商品分类分页查询",
+      "payload": {
+        "msg": "voluptates curiositas",
+        "rc": 0,
+        "data": {
+          "items": [
+            {
+              "id": "conor cursus",
+              "parentId": "depono arcus",
+              "typeName": "voro non",
+              "leaf": true
+            }
+          ],
+          "total": 705,
+          "hasMore": true
+        },
+        "trace": "somniculosus acceptus",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "list",
+      "method": "POST",
+      "path": "/productType/list",
+      "description": "根据parentId查询子分类列表",
+      "payload": {
+        "msg": "tracto cogo",
+        "rc": 0,
+        "data": [
+          {
+            "id": "tenetur thalassinus",
+            "parentId": "similique delinquo",
+            "typeName": "compello trepide",
+            "leaf": true
+          }
+        ],
+        "trace": "adopto cresco",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "pageList_3",
+      "method": "POST",
+      "path": "/jf/productAudit/pageList",
+      "description": "商品审核分页查询",
+      "payload": {
+        "msg": "catena commodi",
+        "rc": 0,
+        "data": {
+          "items": [
+            {
+              "id": "subiungo defluo",
+              "auditState": 327,
+              "shopName": "voluptatem theologus",
+              "shopCode": "demitto ait",
+              "productCode": "temeritas ulterius",
+              "imgSrc": "paulatim sopor",
+              "productName": "termes vero",
+              "productType": "eaque eius",
+              "retailPrice": 844.26,
+              "costPrice": 671.17,
+              "grossMargin": 228.2,
+              "purchaseTax": 667.23,
+              "stockNum": 738
+            }
+          ],
+          "total": 680,
+          "hasMore": false
+        },
+        "trace": "aveho sono",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "bulkExport",
+      "method": "POST",
+      "path": "/jf/productAudit/bulkExport",
+      "description": "商品审核批量导出",
+      "payload": {
+        "msg": "tibi culpo",
+        "rc": 0,
+        "data": "ciminatio tam",
+        "trace": "suffoco torqueo",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "bulkAudit_1",
+      "method": "POST",
+      "path": "/jf/productAudit/bulkAudit",
+      "description": "商品审核批量审核",
+      "payload": {
+        "msg": "sint ipsa",
+        "rc": 0,
+        "data": {
+          "value": "angelus"
+        },
+        "trace": "trepide sub",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "shopQuery",
+      "method": "POST",
+      "path": "/jf/product/shop/page",
+      "description": "供应商名称或编号分页查询",
+      "payload": {
+        "msg": "conitor ventosus",
+        "rc": 0,
+        "data": {
+          "items": [
+            {
+              "shopCode": "vae curatio",
+              "shopName": "quas debeo"
+            }
+          ],
+          "total": 508,
+          "hasMore": false
+        },
+        "trace": "alias vaco",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "salePriceSave",
+      "method": "POST",
+      "path": "/jf/product/salePrice/save",
+      "description": "商品批发价保存",
+      "payload": {
+        "msg": "antea tepesco",
+        "rc": 0,
+        "data": {
+          "value": 344.85
+        },
+        "trace": "vesica admoveo",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "pageList_4",
+      "method": "POST",
+      "path": "/jf/product/pageList",
+      "description": "商品列表分页查询",
+      "payload": {
+        "msg": "vis cum",
+        "rc": 0,
+        "data": {
+          "items": [
+            {
+              "id": 794,
+              "productStatus": 885,
+              "shopName": "strenuus campana",
+              "shopCode": "suppellex molestias",
+              "productCode": "crapula velum",
+              "imgUrl": "corrupti altus",
+              "productName": "minima vindico",
+              "productType": "argumentum vir",
+              "retailPrice": 389.51,
+              "costPrice": 948.54,
+              "grossMargin": 526.94,
+              "defaultSalePrice": 216.65,
+              "purchaseTax": 839.68,
+              "stockNum": 977,
+              "checkUserName": "corona acceptus",
+              "checkTime": "2026-04-13 11:41:38"
+            }
+          ],
+          "total": 785,
+          "hasMore": true
+        },
+        "trace": "stella caterva",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "edit_1",
+      "method": "POST",
+      "path": "/jf/product/edit",
+      "description": "商品列表单商品操作",
+      "payload": {
+        "msg": "defetiscor delibero",
+        "rc": 0,
+        "data": {
+          "value": "tergo"
+        },
+        "trace": "deserunt recusandae",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "bulkSalePriceImport",
+      "method": "POST",
+      "path": "/jf/product/bulkSalePriceImport",
+      "description": "批发价批量导入",
+      "payload": {
+        "msg": "decor earum",
+        "rc": 0,
+        "data": "aegre amplitudo",
+        "trace": "terreo cognatus",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "bulkProductImport",
+      "method": "POST",
+      "path": "/jf/product/bulkProductUpdate",
+      "description": "商品批量更新",
+      "payload": {
+        "msg": "alveus error",
+        "rc": 0,
+        "data": "venustas advoco",
+        "trace": "capto conqueror",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "bulkFreightImport",
+      "method": "POST",
+      "path": "/jf/product/bulkFreightImport",
+      "description": "特殊运费批量导入",
+      "payload": {
+        "msg": "vinculum cubicularis",
+        "rc": 0,
+        "data": "curso careo",
+        "trace": "commodi deinde",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "bulkExport_1",
+      "method": "POST",
+      "path": "/jf/product/bulkExport",
+      "description": "商品批量导出",
+      "payload": {
+        "msg": "demum vel",
+        "rc": 0,
+        "data": "vigor tenax",
+        "trace": "tribuo sui",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "bulkCodeExport",
+      "method": "POST",
+      "path": "/jf/product/bulkCodeExport",
+      "description": "商品编码导出",
+      "payload": {
+        "msg": "cras tandem",
+        "rc": 0,
+        "data": "teres comminor",
+        "trace": "vulariter bardus",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "saveOrUpdate_1",
+      "method": "POST",
+      "path": "/jf/plat/saveOrUpdate",
+      "description": "渠道新增或编辑",
+      "payload": {
+        "msg": "quis aestas",
+        "rc": 0,
+        "data": {
+          "value": "2026-04-13 14:39:24"
+        },
+        "trace": "provident deludo",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "delete",
+      "method": "POST",
+      "path": "/jf/plat/delete",
+      "description": "渠道删除",
+      "payload": {
+        "msg": "adstringo minima",
+        "rc": 0,
+        "data": {
+          "value": "vere"
+        },
+        "trace": "iste velut",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "saveOrUpdate_2",
+      "method": "POST",
+      "path": "/brand/saveOrUpdate",
+      "description": "商品品牌新增或编辑",
+      "payload": {
+        "msg": "concedo defaeco",
+        "rc": 0,
+        "data": {
+          "value": "2026-04-13 14:39:24"
+        },
+        "trace": "contego demergo",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "pageList_5",
+      "method": "POST",
+      "path": "/brand/pageList",
+      "description": "商品品牌查询",
+      "payload": {
+        "msg": "cometes molestiae",
+        "rc": 0,
+        "data": {
+          "items": [
+            {
+              "brandId": 200,
+              "brandName": "tactus volaticus",
+              "brandIntro": "officia bardus",
+              "brandState": 388
+            }
+          ],
+          "total": 214,
+          "hasMore": true
+        },
+        "trace": "voluptas deleniti",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "detail",
+      "method": "GET",
+      "path": "/scm/productAudit/detail",
+      "description": "商品审核详情查询",
+      "payload": {
+        "msg": "benigne eum",
+        "rc": 0,
+        "data": {
+          "id": "valde desolo",
+          "refusalReasons": [
+            {
+              "time": "2026-04-13 14:19:37",
+              "reason": "truculenter saepe"
+            }
+          ],
+          "shopName": "torrens tamen",
+          "shopCode": "supellex decretum",
+          "productCode": "ager clamo",
+          "spellCode": "quod deorsum",
+          "barCode": "spes baiulus",
+          "outProductCode": "patruus pauper",
+          "productName": "certe vomer",
+          "validityPeriod": "coniuratio crinis",
+          "shortName": "minima tribuo",
+          "stockNum": 176,
+          "productSpec": "velit congregatio",
+          "brandId": "damnatio surculus",
+          "brandName": "videlicet crur",
+          "firstProductTypeId": "concedo valde",
+          "firstProductType": "crinis ago",
+          "secondProductTypeId": "carmen sursum",
+          "secondProductType": "ambulo casso",
+          "thirdProductTypeId": "artificiose utpote",
+          "thirdProductType": "porro deputo",
+          "manuFacturer": "conqueror adiuvo",
+          "productLicense": "ars utique",
+          "productUnit": "viriliter casus",
+          "thirdUrl": "subseco canto",
+          "costPrice": 254.97,
+          "retailPrice": 831.1,
+          "taxCode": "vulgus sol",
+          "purchaseTax": 914.1,
+          "imgUrls": [],
+          "productDetail": "error annus",
+          "auditState": 253
+        },
+        "trace": "solio casso",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "detail_1",
+      "method": "GET",
+      "path": "/scm/product/detail",
+      "description": "商品详情查询",
+      "payload": {
+        "msg": "toties aeternus",
+        "rc": 0,
+        "data": {
+          "id": "velut decor",
+          "shopName": "coma dedecor",
+          "shopCode": "concedo perferendis",
+          "productCode": "adfero quasi",
+          "spellCode": "nisi audacia",
+          "barCode": "sit aro",
+          "outProductCode": "voro suffoco",
+          "productName": "balbus ademptio",
+          "validityPeriod": "admiratio decipio",
+          "shortName": "stips adeo",
+          "stockNum": 205,
+          "productSpec": "dedecor volva",
+          "brandId": "tenax esse",
+          "brandName": "conculco sub",
+          "firstProductTypeId": "nam decimus",
+          "firstProductType": "adipisci tersus",
+          "secondProductTypeId": "attollo culpo",
+          "secondProductType": "depono volutabrum",
+          "thirdProductTypeId": "agnitio non",
+          "thirdProductType": "cariosus fugiat",
+          "manuFacturer": "sursum argumentum",
+          "productLicense": "ventosus adfectus",
+          "productUnit": "sed tergo",
+          "thirdUrl": "inventore claudeo",
+          "costPrice": 618.9,
+          "retailPrice": 208.09,
+          "taxCode": "tricesimus atqui",
+          "purchaseTax": 846.65,
+          "imgUrls": [],
+          "productDetail": "odit volva"
+        },
+        "trace": "vox debeo",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "getOne",
+      "method": "GET",
+      "path": "/productType/getOne",
+      "description": "商品分类详情",
+      "payload": {
+        "msg": "conor suscipio",
+        "rc": 0,
+        "data": {
+          "id": "tunc tero",
+          "parentId": "ea crapula",
+          "typeName": "assentator coniecto",
+          "leaf": true
+        },
+        "trace": "caecus vos",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "all",
+      "method": "GET",
+      "path": "/productType/all",
+      "description": "商品分类总树查询",
+      "payload": {
+        "msg": "tersus desipio",
+        "rc": 0,
+        "data": [
+          {
+            "id": 372,
+            "parentId": 850,
+            "typeName": "ipsam laborum"
+          }
+        ],
+        "trace": "cognomen tepidus",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "detail_2",
+      "method": "GET",
+      "path": "/jf/productAudit/detail",
+      "description": "商品审核详情查询",
+      "payload": {
+        "msg": "tabgo pecco",
+        "rc": 0,
+        "data": {
+          "id": "vorax conservo",
+          "refusalReasons": [
+            {
+              "time": "2026-04-12 18:48:55",
+              "reason": "arbor repellendus"
+            }
+          ],
+          "shopName": "summopere cerno",
+          "shopCode": "somniculosus aer",
+          "productCode": "sodalitas victoria",
+          "spellCode": "aspernatur crastinus",
+          "barCode": "amplus cilicium",
+          "outProductCode": "ubi expedita",
+          "productName": "aro audio",
+          "validityPeriod": "totam desparatus",
+          "shortName": "denego caveo",
+          "stockNum": 347,
+          "productSpec": "deprimo tubineus",
+          "brandId": "accusator caterva",
+          "brandName": "videlicet capto",
+          "firstProductTypeId": "utpote adinventitias",
+          "firstProductType": "auctus correptius",
+          "secondProductTypeId": "utrum angustus",
+          "secondProductType": "cervus patior",
+          "thirdProductTypeId": "strues vito",
+          "thirdProductType": "claudeo a",
+          "manuFacturer": "vulpes neque",
+          "productLicense": "tamisium labore",
+          "productUnit": "solutio armarium",
+          "thirdUrl": "taedium tabesco",
+          "costPrice": 988.49,
+          "retailPrice": 637.93,
+          "taxCode": "natus terreo",
+          "purchaseTax": 278.25,
+          "imgUrls": [],
+          "productDetail": "a demo",
+          "auditState": 215
+        },
+        "trace": "quo deprecator",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "shopQuery_1",
+      "method": "GET",
+      "path": "/jf/product/shop/query",
+      "description": "供应商名称或编号查询",
+      "payload": {
+        "msg": "turpis ancilla",
+        "rc": 0,
+        "data": [
+          {
+            "shopCode": "spargo valeo",
+            "shopName": "comitatus facere"
+          }
+        ],
+        "trace": "curis vere",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "salePriceQuery",
+      "method": "GET",
+      "path": "/jf/product/salePrice/query",
+      "description": "商品批发价查询",
+      "payload": {
+        "msg": "talus demum",
+        "rc": 0,
+        "data": [
+          {
+            "platId": 426,
+            "platName": "canto amicitia",
+            "salePrice": 936.71
+          }
+        ],
+        "trace": "thymbra cetera",
+        "success": true
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "detail_3",
+      "method": "GET",
+      "path": "/jf/product/detail",
+      "description": "商品列表详情查询",
+      "payload": {
+        "msg": "barba creo",
+        "rc": 0,
+        "data": {
+          "id": "demoror tenus",
+          "refusalReasons": [
+            {
+              "time": "2026-04-13 01:03:48",
+              "reason": "tabernus tergum"
+            }
+          ],
+          "shopName": "clamo adicio",
+          "shopCode": "clarus temeritas",
+          "productCode": "aut carmen",
+          "spellCode": "aranea substantia",
+          "barCode": "laboriosam eaque",
+          "outProductCode": "cultellus truculenter",
+          "productName": "occaecati cimentarius",
+          "validityPeriod": "tenus delibero",
+          "shortName": "ullam eius",
+          "stockNum": 515,
+          "productSpec": "sonitus spiculum",
+          "brandId": "vilis animi",
+          "brandName": "necessitatibus cur",
+          "firstProductTypeId": "conforto libero",
+          "firstProductType": "truculenter somnus",
+          "secondProductTypeId": "charisma acceptus",
+          "secondProductType": "magni explicabo",
+          "thirdProductTypeId": "crustulum ipsam",
+          "thirdProductType": "adsum magnam",
+          "manuFacturer": "coniecto verto",
+          "productLicense": "arma terebro",
+          "productUnit": "abbas libero",
+          "thirdUrl": "asporto dolorem",
+          "costPrice": 252.31,
+          "retailPrice": 798.69,
+          "taxCode": "sed triumphus",
+          "purchaseTax": 15.38,
+          "imgUrls": [],
+          "productDetail": "stips paens",
+          "auditState": 524,
+          "salesChannels": [
+            "voveo ventito"
+          ],
+          "spProductFaresList": [
+            {
+              "areaName": "adulescens quo",
+              "productCount": 387,
+              "expressPrice": 389.4
+            }
+          ],
+          "productStatus": 457
+        },
+        "trace": "nisi quam",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "all_1",
+      "method": "GET",
+      "path": "/jf/plat/all",
+      "description": "渠道全量查询",
+      "payload": {
+        "msg": "spoliatio deinde",
+        "rc": 0,
+        "data": [
+          {
+            "id": "utilis adversus",
+            "platName": "vereor sto",
+            "createAt": "2026-04-13 11:50:35"
+          }
+        ],
+        "trace": "canis quod",
+        "success": false
+      },
+      "totalCount": 1,
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "endpointId": "detail_4",
+      "method": "GET",
+      "path": "/brand/detail",
+      "description": "商品品牌详情查询",
+      "payload": {
+        "msg": "deinde comes",
+        "rc": 0,
+        "data": {
+          "id": 837,
+          "brandName": "decipio vapulus",
+          "brandIntro": "defetiscor cinis",
+          "brandState": 435,
+          "logoSrc": "stipes ademptio",
+          "brandAuthList": [
+            {
+              "id": 560,
+              "shopId": 931,
+              "authorizationSrc": "censura vulgaris",
+              "expiredTime": "2026-04-13 11:43:04"
+            }
+          ]
+        },
+        "trace": "vix debitis",
         "success": true
       },
       "totalCount": 1,

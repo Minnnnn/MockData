@@ -1,19 +1,16 @@
 import type { Metadata } from 'next';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google';
+import { JetBrains_Mono } from 'next/font/google';
 import './globals.css';
-
-const sans = IBM_Plex_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-sans',
-});
 
 const mono = JetBrains_Mono({
   subsets: ['latin'],
-  weight: ['400', '600'],
+  weight: ['400'],
   variable: '--font-mono',
 });
+
+const SANS_STACK =
+  "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
 export const metadata: Metadata = {
   title: 'MockData Workflow Studio',
@@ -26,8 +23,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='zh-CN' className={`${sans.variable} ${mono.variable}`}>
-      <body style={{ fontFamily: 'var(--font-sans)' }}>
+    <html lang='zh-CN' className={mono.variable}>
+      <body style={{ fontFamily: SANS_STACK }}>
         <TooltipProvider>{children}</TooltipProvider>
       </body>
     </html>

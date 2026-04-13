@@ -34,7 +34,7 @@ export default function Home() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   async function callWorkflow<T>(payload: Record<string, unknown>): Promise<T> {
-    const res = await fetch('/api/workflow', {
+    const res = await fetch('/api/mock-workflow', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

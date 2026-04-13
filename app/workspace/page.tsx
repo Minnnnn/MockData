@@ -4,6 +4,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Accordion, Alert, Button, Card, Chip, Input, Spinner, Tabs, TextArea } from '@heroui/react';
 import { TuneAssistantDialog } from '@/components/tune-assistant-dialog';
+import { buildMockResponseBody, parsePreviewResponseToPayload } from '@/lib/mock-response';
 import {
   applyPersistedTunedMocks,
   buildWorkspaceId,
@@ -28,6 +29,11 @@ type WorkspaceBootstrap = {
   selectedIds: string[];
   typesTs: string;
   apiTs: string;
+};
+
+type TuneMockResult = {
+  changedKeys: string[];
+  unchangedEndpointIds: string[];
 };
 
 const WORKSPACE_CACHE_KEY = 'mockdata-workspace';
@@ -80,6 +86,7 @@ export default function WorkspacePage() {
     const picked = new Set(selectedIds);
     return endpoints.filter((item) => picked.has(item.id));
   }, [endpoints, selectedIds]);
+  const endpointMap = useMemo(() => Object.fromEntries(endpoints.map((item) => [item.id, item] as const)), [endpoints]);
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const selectedEndpointIdSet = useMemo(() => new Set(selectedEndpoints.map((item) => item.id)), [selectedEndpoints]);
 
@@ -175,7 +182,11 @@ export default function WorkspacePage() {
   useEffect(() => {
     const nextSource: Record<string, string> = {};
     for (const [endpointId, endpointMock] of Object.entries(mocks)) {
-      nextSource[endpointId] = JSON.stringify(getEditableMockPayload(endpointMock), null, 2);
+      const endpoint = endpointMap[endpointId];
+      if (!endpoint) {
+        continue;
+      }
+      nextSource[endpointId] = JSON.stringify(buildPreviewResponse(endpoint, endpointMock), null, 2);
     }
 
     setMockDrafts((prev) => {
@@ -207,7 +218,7 @@ export default function WorkspacePage() {
       }
       return Object.fromEntries(nextEntries);
     });
-  }, [mocks]);
+  }, [mocks, endpointMap]);
 
   useEffect(() => {
     setInlineTunePrompts((prev) => {
@@ -222,7 +233,7 @@ export default function WorkspacePage() {
   }, [selectedEndpoints]);
 
   async function callWorkflow<T>(payload: Record<string, unknown>): Promise<T> {
-    const res = await fetch('/api/workflow', {
+    const res = await fetch('/api/mock-workflow', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -385,12 +396,15 @@ export default function WorkspacePage() {
     }
   }
 
-  async function tuneMock(targetIds: string[], promptOverride?: string): Promise<string[]> {
+  async function tuneMock(targetIds: string[], promptOverride?: string): Promise<TuneMockResult> {
     const effectiveTargetIds = targetIds.filter((id) => mocks[id]);
-    if (effectiveTargetIds.length === 0) return [];
+    if (effectiveTargetIds.length === 0) {
+      return { changedKeys: [], unchangedEndpointIds: [] };
+    }
     setLoading(true);
     try {
       const changedKeys: string[] = [];
+      const unchangedEndpointIds: string[] = [];
       let nextState = { ...mocks };
       const effectivePrompt = promptOverride ?? tunePrompt;
 
@@ -420,19 +434,42 @@ export default function WorkspacePage() {
             items: normalizedItems
           }
         };
-        changedKeys.push(...data.changedKeys.map((key) => `${endpointId}:${key}`));
+
+        if (data.changedKeys.length === 0) {
+          unchangedEndpointIds.push(endpointId);
+        } else {
+          changedKeys.push(...data.changedKeys.map((key) => `${endpointId}:${key}`));
+        }
       }
 
-      setMocks(nextState);
+        setMocks(nextState);
+      setMockDrafts((prev) => {
+        const nextDrafts = { ...prev };
+        for (const endpointId of effectiveTargetIds) {
+          const endpoint = endpointMap[endpointId];
+          if (!endpoint) {
+            continue;
+          }
+          nextDrafts[endpointId] = JSON.stringify(buildPreviewResponse(endpoint, nextState[endpointId]), null, 2);
+        }
+        return nextDrafts;
+      });
+      setMockDraftErrors((prev) => {
+        const nextErrors = { ...prev };
+        for (const endpointId of effectiveTargetIds) {
+          delete nextErrors[endpointId];
+        }
+        return nextErrors;
+      });
       setTunePrompt(effectivePrompt);
       await refreshPersistedTunedState();
       if (serverRunning) {
         await startServiceWithMocks(nextState);
       }
-      return changedKeys;
+      return { changedKeys, unchangedEndpointIds };
     } catch (e) {
       console.error(e);
-      return [];
+      throw e instanceof Error ? e : new Error('AI 调优失败，请稍后重试。');
     } finally {
       setLoading(false);
     }
@@ -501,12 +538,29 @@ export default function WorkspacePage() {
   }
 
   async function tuneByPrompt(prompt: string, targetIds: string[]) {
-    const changedKeys = await tuneMock(targetIds, prompt);
-    const endpointLabels = selectedEndpoints
-      .filter((item) => targetIds.includes(item.id))
-      .map((item) => `${item.method.toUpperCase()} ${item.path}`);
+    try {
+      const result = await tuneMock(targetIds, prompt);
+      const tunedEndpoints = selectedEndpoints.filter((item) => targetIds.includes(item.id));
+      const endpointLabels = tunedEndpoints.map((item) => `${item.method.toUpperCase()} ${item.path}`);
+      const unchangedLabels = tunedEndpoints
+        .filter((item) => result.unchangedEndpointIds.includes(item.id))
+        .map((item) => `${item.method.toUpperCase()} ${item.path}`);
 
-    return `已按要求调优 ${targetIds.length} 个接口：\n${endpointLabels.join('\n')}\n\n最新变更字段：${changedKeys.length ? changedKeys.join(', ') : '已更新数据结构内容。'}`;
+      const lines = [
+        `已处理 ${targetIds.length} 个接口：`,
+        endpointLabels.join('\n'),
+        '',
+        `最新变更字段：${result.changedKeys.length ? result.changedKeys.join(', ') : '本次没有检测到字段变化。'}`
+      ];
+
+      if (unchangedLabels.length > 0) {
+        lines.push('', `以下接口未产生变更：\n${unchangedLabels.join('\n')}`);
+      }
+
+      return lines.join('\n');
+    } catch (e) {
+      return `批量调优失败：${(e as Error).message}`;
+    }
   }
 
   async function handleInlineTune(endpointId: string) {
@@ -522,23 +576,34 @@ export default function WorkspacePage() {
 
     setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'loading' }));
     await waitForNextPaint();
-    const changedKeys = await tuneMock([endpointId], prompt);
-    if (changedKeys.length === 0) {
+    try {
+      const result = await tuneMock([endpointId], prompt);
+
+      if (result.changedKeys.length === 0) {
+        setInlineTuneOpen((prev) => ({ ...prev, [endpointId]: false }));
+        setInlineTunePrompts((prev) => ({ ...prev, [endpointId]: prompt }));
+        setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'success' }));
+        setActionMessage({
+          type: 'success',
+          text: `接口 ${endpointId} 已完成 AI 调优，但当前数据与原结果一致，没有可回填变更。`
+        });
+        return;
+      }
+
+      setInlineTuneOpen((prev) => ({ ...prev, [endpointId]: false }));
+      setInlineTunePrompts((prev) => ({ ...prev, [endpointId]: prompt }));
+      setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'success' }));
+      setActionMessage({
+        type: 'success',
+        text: `接口 ${endpointId} AI 调优成功，已回填最新 Mock 数据。`
+      });
+    } catch (e) {
       setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'error' }));
       setActionMessage({
         type: 'error',
-        text: `接口 ${endpointId} 调优失败或未产生有效修改。`
+        text: `接口 ${endpointId} AI 调优失败：${(e as Error).message}`
       });
-      return;
     }
-
-    setInlineTuneOpen((prev) => ({ ...prev, [endpointId]: false }));
-    setInlineTunePrompts((prev) => ({ ...prev, [endpointId]: prompt }));
-    setEndpointUpdateState((prev) => ({ ...prev, [endpointId]: 'success' }));
-    setActionMessage({
-      type: 'success',
-      text: `接口 ${endpointId} AI 调优成功，已回填最新 Mock 数据。`
-    });
   }
 
   async function refreshServerState() {
@@ -572,10 +637,11 @@ export default function WorkspacePage() {
       return;
     }
 
-    const nextItems = Array.isArray(parsed) ? parsed : [parsed];
-    const nextMocks = {
-      ...mocks,
-      [endpointId]: {
+      const nextPayload = parsePreviewResponseToPayload(parsed, runtime.status);
+      const nextItems = Array.isArray(nextPayload) ? nextPayload : [nextPayload];
+      const nextMocks = {
+        ...mocks,
+        [endpointId]: {
         ...(mocks[endpointId] ?? {
           endpointId,
           runtime: { status: 200, delayMs: 0 }
@@ -984,7 +1050,7 @@ export default function WorkspacePage() {
                                 <pre className='mono-block'>{`curl http://localhost:${DEFAULT_PORT}/mock-api${activeEndpoint.path}`}</pre>
                                 <div className='mock-preview-panel'>
                                   <div className='mock-preview-panel__header'>
-                                    <h3>Mock 数据预览</h3>
+                                    <h3>实际返回预览</h3>
                                     <Button
                                       variant='outline'
                                       onPress={() =>
@@ -1038,7 +1104,7 @@ export default function WorkspacePage() {
                                   <TextArea
                                     value={
                                       mockDrafts[activeEndpoint.id] ??
-                                      JSON.stringify(getEditableMockPayload(mocks[activeEndpoint.id]), null, 2)
+                                      JSON.stringify(buildPreviewResponse(activeEndpoint, mocks[activeEndpoint.id]), null, 2)
                                     }
                                     onChange={(event) => updateMockDraft(activeEndpoint.id, event.target.value)}
                                     rows={18}
@@ -1240,6 +1306,17 @@ function getEditableMockPayload(endpointMock?: EndpointMock): unknown {
   }
 
   return endpointMock.items.length === 1 ? endpointMock.items[0] : endpointMock.items;
+}
+
+function buildPreviewResponse(endpoint: EndpointDefinition, endpointMock?: EndpointMock): unknown {
+  const payload = getEditableMockPayload(endpointMock);
+  return buildMockResponseBody({
+    payload,
+    status: endpointMock?.runtime.status ?? 200,
+    description: endpoint.description || endpoint.summary || endpoint.operationId || endpoint.path,
+    path: endpoint.path,
+    totalCount: endpointMock?.items?.length ?? 0
+  });
 }
 
 function waitForNextPaint(): Promise<void> {

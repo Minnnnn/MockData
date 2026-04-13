@@ -25,9 +25,23 @@
               "costPrice": 6500,
               "purchaseTax": 1350,
               "auditTime": "2024-05-21 14:30:22"
+            },
+            {
+              "id": "P202405210002",
+              "auditState": 1,
+              "shopName": "线上直营店",
+              "shopCode": "S002",
+              "productCode": "SKU789012",
+              "imgSrc": "https://example.com/images/product2.jpg",
+              "productName": "无线蓝牙耳机",
+              "productType": "电子产品",
+              "retailPrice": 699,
+              "costPrice": 450,
+              "purchaseTax": 90,
+              "auditTime": "2024-05-22 10:15:00"
             }
           ],
-          "total": 1,
+          "total": 2,
           "hasMore": false
         },
         "trace": "trace_66b3f8c7e12a",
@@ -44,7 +58,7 @@
       "description": "商品审核单商品操作",
       "payload": {
         "rc": 0,
-        "data": true,
+        "data": false,
         "trace": "vado caelestis",
         "success": true
       },
@@ -65,8 +79,8 @@
         "success": false
       },
       "totalCount": 1,
-      "status": 500,
-      "delayMs": 1999
+      "status": 200,
+      "delayMs": 0
     },
     {
       "endpointId": "bulkAudit",
@@ -85,247 +99,113 @@
       "totalCount": 1,
       "status": 200,
       "delayMs": 0
-    },
-    {
-      "endpointId": "pageList_1",
-      "method": "POST",
-      "path": "/scm/product/pageList",
-      "description": "商品列表分页查询",
-      "payload": {
-        "msg": "apto conforto",
-        "rc": 0,
-        "data": {
-          "items": [
-            {
-              "id": "deprecator antiquu2s",
-              "shopName": "vetus aperio",
-              "shopCode": "uterque volaticus",
-              "productCode": "creo molestiae",
-              "imgUrl": "https://example.com/insurance-policy-image.jpg",
-              "productName": "终身寿险保障计划",
-              "productType": "policy",
-              "retailPrice": 685.01,
-              "costPrice": 146.62,
-              "grossMargin": 985.08,
-              "purchaseTax": 845.22,
-              "stockNum": 79
-            },
-            {
-              "id": "deprecator antiquu11s",
-              "shopName": "vetus aperio",
-              "shopCode": "uterque volaticus",
-              "productCode": "creo molestiae",
-              "imgUrl": "https://example.com/insurance-policy-image.jpg",
-              "productName": "终身寿险保障计划",
-              "productType": "policy",
-              "retailPrice": 685.01,
-              "costPrice": 146.62,
-              "grossMargin": 985.08,
-              "purchaseTax": 845.22,
-              "stockNum": 79
-            },
-            {
-              "id": "deprecator antiquu12s",
-              "shopName": "vetus aperio",
-              "shopCode": "uterque volaticus",
-              "productCode": "creo molestiae",
-              "imgUrl": "https://example.com/insurance-policy-image.jpg",
-              "productName": "终身寿险保障计划",
-              "productType": "policy",
-              "retailPrice": 685.01,
-              "costPrice": 146.62,
-              "grossMargin": 985.08,
-              "purchaseTax": 845.22,
-              "stockNum": 79
-            },
-            {
-              "id": "deprecator antiquu13s",
-              "shopName": "vetus aperio",
-              "shopCode": "uterque volaticus",
-              "productCode": "creo molestiae",
-              "imgUrl": "https://example.com/insurance-policy-image.jpg",
-              "productName": "终身寿险保障计划",
-              "productType": "policy",
-              "retailPrice": 685.01,
-              "costPrice": 146.62,
-              "grossMargin": 985.08,
-              "purchaseTax": 845.22,
-              "stockNum": 79
-            },
-            {
-              "id": "deprecator antiquu14s",
-              "shopName": "vetus aperio",
-              "shopCode": "uterque volaticus",
-              "productCode": "creo molestiae",
-              "imgUrl": "https://example.com/insurance-policy-image.jpg",
-              "productName": "终身寿险保障计划",
-              "productType": "policy",
-              "retailPrice": 685.01,
-              "costPrice": 146.62,
-              "grossMargin": 985.08,
-              "purchaseTax": 845.22,
-              "stockNum": 79
-            },
-            {
-              "id": "deprecator antiquu15s",
-              "shopName": "vetus aperio",
-              "shopCode": "uterque volaticus",
-              "productCode": "creo molestiae",
-              "imgUrl": "https://example.com/insurance-policy-image.jpg",
-              "productName": "终身寿险保障计划",
-              "productType": "policy",
-              "retailPrice": 685.01,
-              "costPrice": 146.62,
-              "grossMargin": 985.08,
-              "purchaseTax": 845.22,
-              "stockNum": 79
-            },
-            {
-              "id": "deprecator antiquu16s",
-              "shopName": "vetus aperio",
-              "shopCode": "uterque volaticus",
-              "productCode": "creo molestiae",
-              "imgUrl": "https://example.com/insurance-policy-image.jpg",
-              "productName": "终身寿险保障计划",
-              "productType": "policy",
-              "retailPrice": 685.01,
-              "costPrice": 146.62,
-              "grossMargin": 985.08,
-              "purchaseTax": 845.22,
-              "stockNum": 79
-            }
-          ],
-          "total": 7,
-          "hasMore": false
-        },
-        "trace": "sumptus theca",
-        "success": false
-      },
-      "totalCount": 1,
-      "status": 200,
-      "delayMs": 0
-    },
-    {
-      "endpointId": "save",
-      "method": "POST",
-      "path": "/scm/product/edit",
-      "description": "商品单商品操作",
-      "payload": {
-        "msg": "arx taedium",
-        "rc": 0,
-        "data": {
-          "value": "absconditus"
-        },
-        "trace": "suppono degero",
-        "success": true
-      },
-      "totalCount": 1,
-      "status": 200,
-      "delayMs": 0
-    },
-    {
-      "endpointId": "detail",
-      "method": "GET",
-      "path": "/scm/productAudit/detail",
-      "description": "商品审核详情查询",
-      "payload": {
-        "msg": "benigne eum",
-        "rc": 0,
-        "data": {
-          "id": "valde desolo",
-          "refusalReasons": [
-            {
-              "time": "2026-04-10 11:11:43",
-              "reason": "truculenter saepe"
-            }
-          ],
-          "shopName": "torrens tamen",
-          "shopCode": "supellex decretum",
-          "productCode": "ager clamo",
-          "spellCode": "quod deorsum",
-          "barCode": "spes baiulus",
-          "outProductCode": "patruus pauper",
-          "productName": "certe vomer",
-          "validityPeriod": "coniuratio crinis",
-          "shortName": "minima tribuo",
-          "stockNum": 176,
-          "productSpec": "velit congregatio",
-          "brandId": "damnatio surculus",
-          "brandName": "videlicet crur",
-          "firstProductTypeId": "concedo valde",
-          "firstProductType": "crinis ago",
-          "secondProductTypeId": "carmen sursum",
-          "secondProductType": "ambulo casso",
-          "thirdProductTypeId": "artificiose utpote",
-          "thirdProductType": "porro deputo",
-          "manuFacturer": "conqueror adiuvo",
-          "productLicense": "ars utique",
-          "productUnit": "viriliter casus",
-          "thirdUrl": "subseco canto",
-          "costPrice": 254.97,
-          "retailPrice": 831.1,
-          "taxCode": "vulgus sol",
-          "purchaseTax": 914.1,
-          "imgUrls": [],
-          "productDetail": "error annus",
-          "auditState": 253
-        },
-        "trace": "solio casso",
-        "success": false
-      },
-      "totalCount": 1,
-      "status": 200,
-      "delayMs": 0
-    },
-    {
-      "endpointId": "detail_1",
-      "method": "GET",
-      "path": "/scm/product/detail",
-      "description": "商品详情查询",
-      "payload": {
-        "msg": "toties aeternus",
-        "rc": 0,
-        "data": {
-          "id": "velut decor",
-          "shopName": "coma dedecor",
-          "shopCode": "concedo perferendis",
-          "productCode": "adfero quasi",
-          "spellCode": "nisi audacia",
-          "barCode": "sit aro",
-          "outProductCode": "voro suffoco",
-          "productName": "balbus ademptio",
-          "validityPeriod": "admiratio decipio",
-          "shortName": "stips adeo",
-          "stockNum": 205,
-          "productSpec": "dedecor volva",
-          "brandId": "tenax esse",
-          "brandName": "conculco sub",
-          "firstProductTypeId": "nam decimus",
-          "firstProductType": "adipisci tersus",
-          "secondProductTypeId": "attollo culpo",
-          "secondProductType": "depono volutabrum",
-          "thirdProductTypeId": "agnitio non",
-          "thirdProductType": "cariosus fugiat",
-          "manuFacturer": "sursum argumentum",
-          "productLicense": "ventosus adfectus",
-          "productUnit": "sed tergo",
-          "thirdUrl": "inventore claudeo",
-          "costPrice": 618.9,
-          "retailPrice": 208.09,
-          "taxCode": "tricesimus atqui",
-          "purchaseTax": 846.65,
-          "imgUrls": [],
-          "productDetail": "odit volva"
-        },
-        "trace": "vox debeo",
-        "success": false
-      },
-      "totalCount": 1,
-      "status": 200,
-      "delayMs": 0
     }
   ],
   "logs": [
+    {
+      "id": "1776046032634_knv3zf",
+      "time": "2026-04-13T02:07:12.634Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1776046027554_uist3e",
+      "time": "2026-04-13T02:07:07.554Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1776046019929_0hdbdc",
+      "time": "2026-04-13T02:06:59.929Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1776045969292_dqpfik",
+      "time": "2026-04-13T02:06:09.292Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1776045960976_ipnvik",
+      "time": "2026-04-13T02:06:00.976Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1776045931582_34wwyo",
+      "time": "2026-04-13T02:05:31.582Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1776045926171_la5odr",
+      "time": "2026-04-13T02:05:26.171Z",
+      "method": "POST",
+      "path": "/scm/productAudit/pageList",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1776045861206_ja2zlk",
+      "time": "2026-04-13T02:04:21.206Z",
+      "method": "POST",
+      "path": "/scm/productAudit/edit",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1776044961071_yy8jvu",
+      "time": "2026-04-13T01:49:21.071Z",
+      "method": "POST",
+      "path": "/scm/productAudit/edit",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1776044725570_qalgra",
+      "time": "2026-04-13T01:45:25.570Z",
+      "method": "POST",
+      "path": "/scm/productAudit/edit",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1776043897557_f9inq2",
+      "time": "2026-04-13T01:31:37.557Z",
+      "method": "POST",
+      "path": "/scm/productAudit/edit",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1776043850555_9jjpca",
+      "time": "2026-04-13T01:30:50.555Z",
+      "method": "POST",
+      "path": "/scm/productAudit/edit",
+      "status": 200,
+      "delayMs": 0
+    },
+    {
+      "id": "1776043832028_tkicdg",
+      "time": "2026-04-13T01:30:32.028Z",
+      "method": "POST",
+      "path": "/scm/productAudit/edit",
+      "status": 200,
+      "delayMs": 0
+    },
     {
       "id": "1775791963855_1bn9y0",
       "time": "2026-04-10T03:32:43.855Z",

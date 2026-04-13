@@ -12,7 +12,7 @@ type MockServerState = {
 const STATE_DIR = path.join(process.cwd(), '.mock-data');
 const STATE_FILE = path.join(STATE_DIR, 'mock-server-state.json');
 const INTERNAL_PREFIX = '/api/mock';
-const MANAGEMENT_PATHS = new Set(['/api/mock-server', '/api/workflow', '/api/generateMock']);
+const MANAGEMENT_PATHS = new Set(['/api/mock-server', '/api/workflow', '/api/mock-workflow', '/api/generateMock']);
 
 const DEFAULT_STATE: MockServerState = {
   running: false,

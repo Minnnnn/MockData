@@ -104,13 +104,17 @@ async function tuneMockJsonByPrompt(
   prompt: string,
   requestId: string
 ): Promise<{ output: string; changedKeys: string[] }> {
-  if (!process.env.DEEPSEEK_API_KEY) {
-    throw new Error('缺少 DEEPSEEK_API_KEY，无法执行 AI 调优。');
+  if (!process.env.API_KEY) {
+    throw new Error('缺少 API_KEY，无法执行 AI 调优。');
+  }
+
+  if (!process.env.BASE_URL) {
+    throw new Error('缺少 BASE_URL，无法执行 AI 调优。');
   }
 
   const openai = new OpenAI({
-    baseURL: 'https://api.deepseek.com',
-    apiKey: process.env.DEEPSEEK_API_KEY
+    baseURL: process.env.BASE_URL,
+    apiKey: process.env.API_KEY
   });
 
   const completion = await openai.chat.completions.create({
@@ -127,7 +131,9 @@ async function tuneMockJsonByPrompt(
     ]
   });
 
-  console.info(`${AI_LOG_PREFIX} requestId=${requestId} requestBody="${summarizeForLog(buildTuneUserPrompt(prompt, jsonText), 240)}"`);
+  console.info(
+    `${AI_LOG_PREFIX} requestId=${requestId} requestBody="${summarizeForLog(buildTuneUserPrompt(prompt, jsonText), 240)}"`
+  );
 
   const content = completion.choices[0]?.message?.content;
 
